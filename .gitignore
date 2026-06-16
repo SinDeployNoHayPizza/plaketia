@@ -1,0 +1,36 @@
+node_modules/
+dist/
+build/
+*.local
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+
+# WASM cache (downloaded at runtime)
+public/wasm/*.wasm
+
+# Temp
+tmp/
+temp/
+
+# Coverage output
+coverage/
