@@ -14,7 +14,5 @@
       "description": "EDA tool integration (Yosys, Icarus) — enable when adding digital support"
     }
   },
-  "skills": [
-    "frontend-design"
-  ]
+  "skills": ["frontend-design"]
 }
