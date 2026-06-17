@@ -3,16 +3,7 @@
   "mcp": {
     "context7": {
       "type": "local",
-      "command": ["npx", "-y", "@context7/context7-server"],
-      "enabled": true,
-      "description": "Technical docs search for React, Three.js, SPICE, etc."
-    },
-    "mcp-eda": {
-      "type": "local",
-      "command": ["npx", "-y", "mcp-eda"],
-      "enabled": false,
-      "description": "EDA tool integration (Yosys, Icarus) — enable when adding digital support"
+      "command": ["bunx", "-y", "@upstash/context7-mcp"]
     }
-  },
-  "skills": ["frontend-design"]
+  }
 }

@@ -58,7 +58,14 @@ bun run lint         # Biome lint + format
 |------|---------|
 | `src/features/circuit/model/Circuit.ts` | Core circuit graph |
 | `src/features/components/base/Component.ts` | Abstract component interface |
+| `src/features/schematic/registry.tsx` | Component registry + SVG symbol definitions |
+| `src/features/schematic/store.ts` | Zustand store for React Flow (nodes, edges, sync) |
+| `src/features/schematic/nodes/ComponentNode.tsx` | Generic React Flow node for all component types |
+| `src/features/schematic/nodes/GroundNode.tsx` | Ground node component |
+| `src/features/schematic/edges/WireEdge.tsx` | Custom wire edge (bezier) |
+| `src/features/schematic/toolbar/ComponentPalette.tsx` | Draggable component palette |
+| `src/features/schematic/properties/PropertiesPanel.tsx` | Component property editor |
+| `src/screens/SchematicEditor/SchematicEditorScreen.tsx` | Main schematic capture screen |
 | `src/features/simulation/engine/ngspice.ts` | ngspice-wasm wrapper |
-| `src/features/schematic/nodes/` | Custom React Flow nodes |
 | `src/features/pcb3d/Board3D/BoardGeometry.tsx` | 3D board rendering |
 | `src/features/project/persistence.ts` | File save/load |
