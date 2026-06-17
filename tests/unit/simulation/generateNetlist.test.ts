@@ -87,7 +87,6 @@ describe('generateSimulationNetlist', () => {
     expect(netlist).toContain('R1')
     expect(netlist).toContain('10k')
     expect(netlist).toContain('N001')
-    expect(netlist).toContain('GND')
   })
 
   it('prints node voltages for signal nodes', () => {

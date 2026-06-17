@@ -24,9 +24,9 @@ export function generateSimulationNetlist(
     const deviceLine = comp.toSpiceDeviceLine()
     const pinNodes = deviceLine.pins.map((_p, i) => {
       const node = circuit.getPinNode(compId, i)
-      return node?.id ?? '0'
+      return node?.id === 'GND' ? '0' : (node?.id ?? '0')
     })
-    const parts: string[] = [deviceLine.prefix + comp.reference, ...pinNodes]
+    const parts: string[] = [comp.reference, ...pinNodes]
     if (deviceLine.modelName) {
       parts.push(deviceLine.modelName)
     } else if (deviceLine.value) {
