@@ -35,7 +35,10 @@ export abstract class ComponentBase implements Component {
 
   toSpiceNetlist(): string {
     const line = this.toSpiceDeviceLine()
-    const parts: string[] = [line.prefix + this.reference]
+    const ref = this.reference.startsWith(line.prefix)
+      ? this.reference
+      : line.prefix + this.reference
+    const parts: string[] = [ref]
 
     for (const pin of line.pins) {
       parts.push(pin)
