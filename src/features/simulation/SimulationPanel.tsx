@@ -1,6 +1,7 @@
 import { useCircuitStore } from '@/features/circuit/store.ts'
 import { useCallback, useState } from 'react'
 import { useSimulation } from './hooks/useSimulation.ts'
+import { OscilloscopePanel } from './results/OscilloscopePanel.tsx'
 import type { AnalysisType, SimulationConfig } from './types.ts'
 
 export function SimulationPanel() {
@@ -174,25 +175,7 @@ export function SimulationPanel() {
               <div className="font-body text-[10px] font-medium text-text-secondary mb-1">
                 Waveforms
               </div>
-              {result.waveforms.map((wf) => (
-                <div key={wf.label} className="mb-2">
-                  <div className="font-mono text-[10px] text-text-secondary mb-0.5">{wf.label}</div>
-                  <div className="font-mono text-[9px] text-text-primary max-h-24 overflow-y-auto">
-                    {wf.data.length > 0 && (
-                      <span>
-                        {wf.data[0].time.toExponential(3)}s → {wf.data[0].value.toFixed(3)}V
-                        {wf.data.length > 1 && (
-                          <>
-                            , {wf.data[wf.data.length - 1].time.toExponential(3)}s →{' '}
-                            {wf.data[wf.data.length - 1].value.toFixed(3)}V
-                          </>
-                        )}
-                        <span className="text-text-secondary"> ({wf.data.length} pts)</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
+              <OscilloscopePanel result={result} />
             </div>
           )}
 
