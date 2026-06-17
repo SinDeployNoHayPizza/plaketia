@@ -40,11 +40,13 @@
 - [x] Drag-and-drop from toolbar to canvas
 - [x] Properties panel (edit values, models, references)
 - [x] Ground node, power symbols, labels
-- [ ] ERC validation (Electrical Rule Check)
-- [x] Export to SPICE netlist
-- [ ] Import from SPICE netlist
-- [ ] Undo/redo for schematic edits
-- [ ] Integration tests: schematic → netlist
+- [x] ERC validation (Electrical Rule Check)
+- [x] Export to SPICE netlist (generateNetlist)
+- [x] Import from SPICE netlist (parseNetlist + importNetlist)
+- [x] Undo/redo for schematic edits (Ctrl+Z/Y snapshot-based)
+- [x] Integration tests: schematic → netlist round-trip
+- [x] MOSFET N / JFET N component models + symbols
+- [x] SPICE parser extension: M, J, .model, .subckt, line continuation, extended sources
 
 ## Phase 3 — Simulation & Instruments (Estimated: 2 weeks)
 

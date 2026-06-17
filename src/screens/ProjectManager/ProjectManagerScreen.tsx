@@ -1,4 +1,7 @@
+import { applyImportToCircuit, importNetlist } from '@/features/circuit/io/spiceNetlist.ts'
+import { Circuit } from '@/features/circuit/model/Circuit.ts'
 import { useCircuitStore } from '@/features/circuit/store.ts'
+import { useSchematicStore } from '@/features/schematic/store.ts'
 import { Button } from '@/shared/ui/Button.tsx'
 import { Dialog } from '@/shared/ui/Dialog.tsx'
 import { useState } from 'react'
@@ -99,9 +102,13 @@ function EmptyState({ onNewDesign }: { onNewDesign: () => void }) {
 export function ProjectManagerScreen({ onOpenProject }: ProjectManagerScreenProps) {
   const [projects, setProjects] = useState<ProjectEntry[]>(loadProjects)
   const [showNewDialog, setShowNewDialog] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [importText, setImportText] = useState('')
+  const [importErrors, setImportErrors] = useState('')
   const [newName, setNewName] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const createCircuit = useCircuitStore((s) => s.createCircuit)
+  const loadCircuit = useCircuitStore((s) => s.loadCircuit)
 
   function handleCreate() {
     if (!newName.trim()) return
@@ -119,6 +126,7 @@ export function ProjectManagerScreen({ onOpenProject }: ProjectManagerScreenProp
     setProjects(next)
     saveProjects(next)
 
+    useSchematicStore.getState().reset()
     createCircuit(id, entry.name)
 
     setNewName('')
@@ -136,7 +144,51 @@ export function ProjectManagerScreen({ onOpenProject }: ProjectManagerScreenProp
   function handleOpen(id: string) {
     const project = projects.find((p) => p.id === id)
     if (!project) return
+    useSchematicStore.getState().reset()
     createCircuit(id, project.name)
+    onOpenProject?.(id)
+  }
+
+  function handleImport() {
+    if (!importText.trim()) return
+
+    const result = importNetlist(importText)
+    if (result.errors.length > 0) {
+      setImportErrors(result.errors.join('\n'))
+      return
+    }
+
+    const id = `proj-${Date.now()}`
+    const now = new Date().toISOString()
+    const entry: ProjectEntry = {
+      id,
+      name: result.title,
+      description: 'Imported from SPICE netlist',
+      modified: now,
+    }
+
+    const next = [entry, ...projects]
+    setProjects(next)
+    saveProjects(next)
+
+    const circuit = new Circuit(id, result.title)
+    const components = applyImportToCircuit(circuit, result)
+    loadCircuit(circuit, components)
+
+    useSchematicStore.getState().clear()
+
+    let idx = 0
+    for (const [compId, comp] of components) {
+      const pos = { x: 100 + (idx % 5) * 160, y: 100 + Math.floor(idx / 5) * 120 }
+      useSchematicStore
+        .getState()
+        .addImportedComponentNode(compId, comp.type, comp.reference, comp.value, comp.model, pos)
+      idx++
+    }
+
+    setImportText('')
+    setImportErrors('')
+    setShowImportDialog(false)
     onOpenProject?.(id)
   }
 
@@ -152,9 +204,14 @@ export function ProjectManagerScreen({ onOpenProject }: ProjectManagerScreenProp
             Analog Electronics Design &amp; Analysis
           </p>
         </div>
-        <Button variant="primary" size="lg" onClick={() => setShowNewDialog(true)}>
-          + New design
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="md" onClick={() => setShowImportDialog(true)}>
+            Import SPICE
+          </Button>
+          <Button variant="primary" size="lg" onClick={() => setShowNewDialog(true)}>
+            + New design
+          </Button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto">
@@ -277,6 +334,50 @@ export function ProjectManagerScreen({ onOpenProject }: ProjectManagerScreenProp
               rows={3}
             />
           </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={showImportDialog}
+        onClose={() => {
+          setShowImportDialog(false)
+          setImportErrors('')
+        }}
+        title="Import SPICE Netlist"
+        actions={
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowImportDialog(false)
+                setImportErrors('')
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleImport} disabled={!importText.trim()}>
+              Import
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-3">
+          <p className="font-body text-xs text-text-secondary leading-relaxed">
+            Paste a SPICE netlist to create a new design. Supports R, C, L, D, Q, M, J, V, I
+            devices, .model/.subckt, line continuation, and analysis directives.
+          </p>
+          <textarea
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+            className="w-full h-48 px-3 py-2 bg-substrate/50 border border-trace rounded-sm font-mono text-xs text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-copper focus:bg-substrate/70 transition-colors resize-none"
+            placeholder={'* Voltage Divider\nR1 N001 N002 10k\nR2 N002 0 2.2k\n.end'}
+            spellCheck={false}
+          />
+          {importErrors && (
+            <div className="font-mono text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-sm px-3 py-2 whitespace-pre-wrap">
+              {importErrors}
+            </div>
+          )}
         </div>
       </Dialog>
     </div>

@@ -9,9 +9,10 @@ import {
   SelectionMode,
   type XYPosition,
 } from '@xyflow/react'
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import '@xyflow/react/dist/style.css'
 import { WireEdge } from '@/features/schematic/edges/WireEdge.tsx'
+import { ErcPanel } from '@/features/schematic/erc/ErcPanel.tsx'
 import { ComponentNode } from '@/features/schematic/nodes/ComponentNode.tsx'
 import { GroundNode } from '@/features/schematic/nodes/GroundNode.tsx'
 import { PropertiesPanel } from '@/features/schematic/properties/PropertiesPanel.tsx'
@@ -77,6 +78,32 @@ export function SchematicEditorScreen() {
     useSchematicStore.setState({ selectedNodeId: null })
   }, [])
 
+  const onNodeDragStart = useCallback(() => {
+    useSchematicStore.getState().pushUndo()
+  }, [])
+
+  const onNodeDragStop = useCallback(() => {
+    useSchematicStore.getState().pushUndo()
+  }, [])
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
+        event.preventDefault()
+        if (event.shiftKey) {
+          useSchematicStore.getState().redo()
+        } else {
+          useSchematicStore.getState().undo()
+        }
+      } else if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
+        event.preventDefault()
+        useSchematicStore.getState().redo()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -107,6 +134,8 @@ export function SchematicEditorScreen() {
             onConnect={onConnect}
             onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
+            onNodeDragStart={onNodeDragStart}
+            onNodeDragStop={onNodeDragStop}
             onDragOver={onDragOver}
             onDrop={onDrop}
             nodeTypes={nodeTypes}
@@ -114,7 +143,7 @@ export function SchematicEditorScreen() {
             connectionMode={ConnectionMode.Loose}
             selectionMode={SelectionMode.Partial}
             fitView
-            deleteKeyCode="Delete"
+            deleteKeyCode={null}
             multiSelectionKeyCode="Shift"
             snapToGrid
             snapGrid={[10, 10]}
@@ -130,11 +159,16 @@ export function SchematicEditorScreen() {
         </div>
       </div>
 
-      <div className="w-52 border-l border-trace bg-silk overflow-y-auto shrink-0">
-        <div className="px-3 py-2 border-b border-trace font-display text-sm font-bold tracking-wide text-text-primary">
-          Properties
+      <div className="w-52 border-l border-trace bg-silk overflow-y-auto shrink-0 flex flex-col">
+        <div>
+          <div className="px-3 py-2 border-b border-trace font-display text-sm font-bold tracking-wide text-text-primary">
+            Properties
+          </div>
+          <PropertiesPanel />
         </div>
-        <PropertiesPanel />
+        <div className="border-t border-trace">
+          <ErcPanel />
+        </div>
       </div>
     </div>
   )

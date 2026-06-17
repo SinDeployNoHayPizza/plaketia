@@ -1,3 +1,5 @@
+import { JfetN } from '@/features/components/active/JfetN.ts'
+import { MosfetN } from '@/features/components/active/MosfetN.ts'
 import { Capacitor } from '@/features/components/passive/Capacitor.ts'
 import { Inductor } from '@/features/components/passive/Inductor.ts'
 import { Resistor } from '@/features/components/passive/Resistor.ts'
@@ -247,6 +249,78 @@ export const componentRegistry: Record<string, ComponentRegistration> = {
     symbol: CurrentSourceSymbol,
     getPinName: (i: number) => (i === 0 ? '+' : '-'),
   },
+  'mosfet-n': {
+    type: 'mosfet-n',
+    label: 'MOSFET N',
+    category: 'active',
+    defaultReference: 'M',
+    defaultParams: { model: 'NMOS' },
+    createModel: (id: string) => MosfetN.create(id),
+    width: 80,
+    height: 80,
+    pins: [
+      { index: 0, x: 0, y: 20, label: 'D' },
+      { index: 1, x: 40, y: 0, label: 'G' },
+      { index: 2, x: 40, y: 80, label: 'S' },
+      { index: 3, x: 80, y: 40, label: 'B' },
+    ],
+    symbol: MosfetNSymbol,
+    getPinName: (i: number) => ['D', 'G', 'S', 'B'][i] ?? `P${i}`,
+  },
+  'jfet-n': {
+    type: 'jfet-n',
+    label: 'JFET N',
+    category: 'active',
+    defaultReference: 'J',
+    defaultParams: { model: 'NJF' },
+    createModel: (id: string) => JfetN.create(id),
+    width: 80,
+    height: 70,
+    pins: [
+      { index: 0, x: 0, y: 20, label: 'D' },
+      { index: 1, x: 40, y: 0, label: 'G' },
+      { index: 2, x: 40, y: 70, label: 'S' },
+    ],
+    symbol: JfetNSymbol,
+    getPinName: (i: number) => ['D', 'G', 'S'][i] ?? `P${i}`,
+  },
+}
+
+function MosfetNSymbol(_props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg aria-hidden={true} viewBox="0 0 80 80" width="100%" height="100%" overflow="visible">
+      <line x1="0" y1="20" x2="20" y2="20" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="40" y1="0" x2="40" y2="15" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="40" y1="65" x2="40" y2="80" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="40" y1="40" x2="80" y2="40" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="20" y1="20" x2="20" y2="60" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="20" y1="60" x2="40" y2="60" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="40" y1="60" x2="40" y2="65" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="27" y1="30" x2="27" y2="50" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="27" y1="50" x2="37" y2="55" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="27" y1="50" x2="35" y2="42" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="40" y1="20" x2="48" y2="20" stroke="currentColor" strokeWidth="1" />
+      <line x1="48" y1="20" x2="48" y2="15" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  )
+}
+
+function JfetNSymbol(_props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg aria-hidden={true} viewBox="0 0 80 70" width="100%" height="100%" overflow="visible">
+      <line x1="0" y1="20" x2="20" y2="20" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="40" y1="0" x2="40" y2="15" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="40" y1="55" x2="40" y2="70" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="40" y1="40" x2="80" y2="40" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="20" y1="20" x2="20" y2="50" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="20" y1="50" x2="40" y2="50" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="40" y1="50" x2="40" y2="55" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="27" y1="25" x2="27" y2="45" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="27" y1="25" x2="37" y2="28" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="27" y1="25" x2="35" y2="18" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="40" y1="20" x2="46" y2="20" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  )
 }
 
 export const groundRegistration = {
@@ -262,6 +336,6 @@ export const groundRegistration = {
 
 export const componentCategories: Record<string, Array<keyof typeof componentRegistry>> = {
   passive: ['resistor', 'capacitor', 'inductor'],
-  active: ['diode', 'bjt-npn'],
+  active: ['diode', 'bjt-npn', 'mosfet-n', 'jfet-n'],
   source: ['voltage-source', 'current-source'],
 }

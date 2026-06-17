@@ -10,6 +10,7 @@ interface CircuitState {
   selectedNodeId: string | null
 
   createCircuit: (id: string, name: string) => void
+  loadCircuit: (circuit: Circuit, components: Map<string, Component>) => void
   addNode: (label?: string, type?: CircuitNode['type']) => CircuitNode | undefined
   removeNode: (nodeId: string) => void
   addComponent: (component: Component) => void
@@ -30,6 +31,10 @@ export const useCircuitStore = create<CircuitState>((set, get) => ({
   createCircuit: (id: string, name: string) => {
     const circuit = new Circuit(id, name)
     set({ circuit, components: new Map(), selectedComponentId: null, selectedNodeId: null })
+  },
+
+  loadCircuit: (circuit: Circuit, components: Map<string, Component>) => {
+    set({ circuit, components, selectedComponentId: null, selectedNodeId: null })
   },
 
   addNode: (label?: string, type: CircuitNode['type'] = 'signal') => {

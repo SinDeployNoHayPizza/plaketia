@@ -8,8 +8,8 @@ export class Inductor extends ComponentBase {
 
   get pins(): Pin[] {
     return [
-      { index: 1, name: '1', electricalType: 'passive' },
-      { index: 2, name: '2', electricalType: 'passive' },
+      { index: 0, name: '1', electricalType: 'passive' },
+      { index: 1, name: '2', electricalType: 'passive' },
     ]
   }
 
@@ -39,9 +39,9 @@ export class Inductor extends ComponentBase {
     })
   }
 
-  static create(id: string): Inductor {
+  static create(id: string, reference?: string): Inductor {
     refCounter++
-    return new Inductor(id, `L${refCounter}`, {
+    return new Inductor(id, reference ?? `L${refCounter}`, {
       value: '10mH',
       position: { x: 0, y: 0 },
     })

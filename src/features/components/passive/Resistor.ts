@@ -8,8 +8,8 @@ export class Resistor extends ComponentBase {
 
   get pins(): Pin[] {
     return [
-      { index: 1, name: '1', electricalType: 'passive' },
-      { index: 2, name: '2', electricalType: 'passive' },
+      { index: 0, name: '1', electricalType: 'passive' },
+      { index: 1, name: '2', electricalType: 'passive' },
     ]
   }
 
@@ -39,9 +39,9 @@ export class Resistor extends ComponentBase {
     })
   }
 
-  static create(id: string): Resistor {
+  static create(id: string, reference?: string): Resistor {
     refCounter++
-    return new Resistor(id, `R${refCounter}`, {
+    return new Resistor(id, reference ?? `R${refCounter}`, {
       value: '1k',
       position: { x: 0, y: 0 },
     })

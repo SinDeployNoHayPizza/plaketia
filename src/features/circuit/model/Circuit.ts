@@ -42,8 +42,9 @@ export class Circuit {
   }
 
   addNode(label?: string, type: CircuitNode['type'] = 'signal'): CircuitNode {
-    const explicitId = label && !label.startsWith('N') ? label : undefined
-    const id = explicitId ?? generateNodeId()
+    const id = label ?? generateNodeId()
+    const existing = this._nodes.get(id)
+    if (existing) return existing
     const node: CircuitNode = { id, label: label ?? id, type }
     this._nodes.set(id, node)
     this._touch()

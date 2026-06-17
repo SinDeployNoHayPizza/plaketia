@@ -1,3 +1,9 @@
+import { Circuit } from '@/features/circuit/model/Circuit.ts'
+import type {
+  Connection as CircuitConnection,
+  CircuitMetadata,
+  CircuitNode,
+} from '@/features/circuit/model/types.ts'
 import { useCircuitStore } from '@/features/circuit/store.ts'
 import type { Component } from '@/features/components/base/types.ts'
 import {
@@ -21,10 +27,83 @@ function nextSchematicId(): string {
   return `sc-${schematicNodeIdCounter}`
 }
 
+interface UndoEntry {
+  nodes: Node[]
+  edges: Edge[]
+  circuitData: {
+    id: string
+    nodes: [string, CircuitNode][]
+    connections: CircuitConnection[]
+    metadata: CircuitMetadata
+  } | null
+  componentsData: {
+    id: string
+    reference: string
+    value: string
+    type: string
+    model: string | undefined
+    position: { x: number; y: number }
+    rotation: number
+    metadata: Record<string, unknown>
+  }[]
+  schematicNodeIdCounter: number
+}
+
+function createUndoEntry(nodes: Node[], edges: Edge[]): UndoEntry {
+  const cs = useCircuitStore.getState()
+  return {
+    nodes: JSON.parse(JSON.stringify(nodes)),
+    edges: JSON.parse(JSON.stringify(edges)),
+    circuitData: cs.circuit
+      ? {
+          id: cs.circuit.id,
+          nodes: Array.from(cs.circuit.nodes.entries()),
+          connections: [...cs.circuit.connections],
+          metadata: { ...cs.circuit.metadata },
+        }
+      : null,
+    componentsData: Array.from(cs.components.entries()).map(([, comp]) => ({
+      id: comp.id,
+      reference: comp.reference,
+      value: comp.value,
+      type: comp.type,
+      model: (comp as { model: string | undefined }).model,
+      position: { ...comp.position },
+      rotation: comp.rotation,
+      metadata: { ...comp.metadata },
+    })),
+    schematicNodeIdCounter,
+  }
+}
+
+function applyUndoEntry(entry: UndoEntry): void {
+  const cs = useCircuitStore.getState()
+  schematicNodeIdCounter = Math.max(schematicNodeIdCounter, entry.schematicNodeIdCounter)
+
+  if (entry.circuitData) {
+    const nodesMap = new Map(entry.circuitData.nodes)
+    const circuit = Circuit.fromJSON({
+      id: entry.circuitData.id,
+      nodes: nodesMap,
+      connections: entry.circuitData.connections,
+      metadata: entry.circuitData.metadata,
+    })
+    const componentsMap = new Map<string, Component>()
+    for (const cd of entry.componentsData) {
+      componentsMap.set(cd.id, cd as unknown as Component)
+    }
+    cs.loadCircuit(circuit, componentsMap)
+  } else {
+    cs.clear()
+  }
+}
+
 export interface SchematicState {
   nodes: Node[]
   edges: Edge[]
   selectedNodeId: string | null
+  undoStack: UndoEntry[]
+  redoStack: UndoEntry[]
 
   onNodesChange: (changes: NodeChange[]) => void
   onEdgesChange: (changes: EdgeChange[]) => void
@@ -32,9 +111,22 @@ export interface SchematicState {
 
   addComponentAtPosition: (componentType: string, position: XYPosition) => void
   addGroundAtPosition: (position: XYPosition) => void
+  addImportedComponentNode: (
+    compId: string,
+    componentType: string,
+    reference: string,
+    value: string,
+    model: string | undefined,
+    position: XYPosition,
+  ) => void
   removeNodeAndEdges: (nodeId: string) => void
   updateNodeData: (nodeId: string, data: Partial<ComponentNodeData>) => void
+  moveNode: (nodeId: string, position: XYPosition) => void
   clear: () => void
+  reset: () => void
+  undo: () => void
+  redo: () => void
+  pushUndo: () => void
   getNodeIdForPin: (componentId: string, pinIndex: number) => string | undefined
 }
 
@@ -47,6 +139,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeId: null,
+  undoStack: [],
+  redoStack: [],
 
   onNodesChange: (changes: NodeChange[]) => {
     set({ nodes: applyNodeChanges(changes, get().nodes) })
@@ -57,7 +151,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
   },
 
   onConnect: (connection: Connection) => {
-    const { edges } = get()
+    const { nodes, edges } = get()
+    const undo = createUndoEntry(nodes, edges)
     const circuitStore = useCircuitStore.getState()
     const circuit = circuitStore.circuit
     if (!circuit) return
@@ -108,6 +203,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
                 type: 'wire',
               },
             ],
+            undoStack: [...get().undoStack, undo],
+            redoStack: [],
           })
           return
         }
@@ -154,6 +251,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
           type: 'wire',
         },
       ],
+      undoStack: [...get().undoStack, undo],
+      redoStack: [],
     })
   },
 
@@ -161,6 +260,8 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const reg = componentRegistry[componentType]
     if (!reg) return
 
+    const { nodes, edges } = get()
+    const undo = createUndoEntry(nodes, edges)
     const circuitStore = useCircuitStore.getState()
     const nodeId = nextSchematicId()
     const component = reg.createModel(nodeId) as Component
@@ -179,10 +280,16 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       } satisfies ComponentNodeData,
     }
 
-    set({ nodes: [...get().nodes, newNode] })
+    set({
+      nodes: [...nodes, newNode],
+      undoStack: [...get().undoStack, undo],
+      redoStack: [],
+    })
   },
 
   addGroundAtPosition: (position: XYPosition) => {
+    const { nodes, edges } = get()
+    const undo = createUndoEntry(nodes, edges)
     const nodeId = nextSchematicId()
     const newNode: Node = {
       id: nodeId,
@@ -191,12 +298,50 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       data: {},
     }
 
-    set({ nodes: [...get().nodes, newNode] })
+    set({
+      nodes: [...nodes, newNode],
+      undoStack: [...get().undoStack, undo],
+      redoStack: [],
+    })
+  },
+
+  addImportedComponentNode: (
+    compId: string,
+    componentType: string,
+    reference: string,
+    value: string,
+    model: string | undefined,
+    position: XYPosition,
+  ) => {
+    const reg = componentRegistry[componentType]
+    if (!reg) return
+
+    const { nodes, edges } = get()
+    const undo = createUndoEntry(nodes, edges)
+
+    const newNode: Node = {
+      id: compId,
+      type: 'component',
+      position: { x: position.x - reg.width / 2, y: position.y - reg.height / 2 },
+      data: {
+        reference,
+        value,
+        model,
+        componentType,
+      } satisfies ComponentNodeData,
+    }
+
+    set({
+      nodes: [...nodes, newNode],
+      undoStack: [...get().undoStack, undo],
+      redoStack: [],
+    })
   },
 
   removeNodeAndEdges: (nodeId: string) => {
-    const circuitStore = useCircuitStore.getState()
     const { nodes, edges } = get()
+    const undo = createUndoEntry(nodes, edges)
+    const circuitStore = useCircuitStore.getState()
 
     circuitStore.removeComponent(nodeId)
 
@@ -206,18 +351,84 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       nodes: nodes.filter((n) => n.id !== nodeId),
       edges: remainingEdges,
       selectedNodeId: get().selectedNodeId === nodeId ? null : get().selectedNodeId,
+      undoStack: [...get().undoStack, undo],
+      redoStack: [],
     })
   },
 
   updateNodeData: (nodeId: string, data: Partial<ComponentNodeData>) => {
-    const { nodes } = get()
+    const { nodes, edges } = get()
+    const undo = createUndoEntry(nodes, edges)
     set({
       nodes: nodes.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n)),
+      undoStack: [...get().undoStack, undo],
+      redoStack: [],
+    })
+  },
+
+  moveNode: (nodeId: string, position: XYPosition) => {
+    const { nodes, edges } = get()
+    const undo = createUndoEntry(nodes, edges)
+    set({
+      nodes: nodes.map((n) => (n.id === nodeId ? { ...n, position } : n)),
+      undoStack: [...get().undoStack, undo],
+      redoStack: [],
     })
   },
 
   clear: () => {
-    set({ nodes: [], edges: [], selectedNodeId: null })
+    const { nodes, edges } = get()
+    const undo = createUndoEntry(nodes, edges)
+    set({
+      nodes: [],
+      edges: [],
+      selectedNodeId: null,
+      undoStack: [...get().undoStack, undo],
+      redoStack: [],
+    })
+  },
+
+  reset: () => {
+    schematicNodeIdCounter = 0
+    set({ nodes: [], edges: [], selectedNodeId: null, undoStack: [], redoStack: [] })
+  },
+
+  undo: () => {
+    const { undoStack, nodes, edges } = get()
+    if (undoStack.length === 0) return
+    const entry = undoStack[undoStack.length - 1]
+    const currentUndo = createUndoEntry(nodes, edges)
+    applyUndoEntry(entry)
+    set({
+      nodes: entry.nodes,
+      edges: entry.edges,
+      selectedNodeId: null,
+      undoStack: undoStack.slice(0, -1),
+      redoStack: [...get().redoStack, currentUndo],
+    })
+  },
+
+  redo: () => {
+    const { redoStack, nodes, edges } = get()
+    if (redoStack.length === 0) return
+    const entry = redoStack[redoStack.length - 1]
+    const currentUndo = createUndoEntry(nodes, edges)
+    applyUndoEntry(entry)
+    set({
+      nodes: entry.nodes,
+      edges: entry.edges,
+      selectedNodeId: null,
+      redoStack: redoStack.slice(0, -1),
+      undoStack: [...get().undoStack, currentUndo],
+    })
+  },
+
+  pushUndo: () => {
+    const { nodes, edges, undoStack } = get()
+    set({
+      undoStack: [...undoStack, createUndoEntry(nodes, edges)],
+      redoStack: [],
+    })
   },
 
   getNodeIdForPin: (componentId: string, pinIndex: number) => {

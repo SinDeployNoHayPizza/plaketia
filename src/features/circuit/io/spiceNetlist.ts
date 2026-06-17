@@ -1,4 +1,9 @@
+import { JfetN } from '@/features/components/active/JfetN.ts'
+import { MosfetN } from '@/features/components/active/MosfetN.ts'
 import type { Component } from '@/features/components/base/types.ts'
+import { Capacitor } from '@/features/components/passive/Capacitor.ts'
+import { Inductor } from '@/features/components/passive/Inductor.ts'
+import { Resistor } from '@/features/components/passive/Resistor.ts'
 import type { Circuit } from '../model/Circuit.ts'
 
 export function generateNetlist(circuit: Circuit, components: Map<string, Component>): string {
@@ -37,36 +42,315 @@ export function generateNetlist(circuit: Circuit, components: Map<string, Compon
 export interface ParsedNetlist {
   title: string
   lines: string[]
+  models: Map<string, { type: string; params: string }>
+  analysis: string[]
   errors: string[]
 }
 
 export function parseNetlist(netlist: string): ParsedNetlist {
   const errors: string[] = []
+  const models = new Map<string, { type: string; params: string }>()
+  const analysis: string[] = []
   const cleanLines: string[] = []
   let title = 'Imported'
+  let inSubckt = 0
 
   const rawLines = netlist.split('\n')
+  const joinedLines: string[] = []
 
   for (const rawLine of rawLines) {
-    const line = rawLine.trim()
+    const trimmed = rawLine.trim()
+    if (trimmed.startsWith('+') && joinedLines.length > 0) {
+      joinedLines[joinedLines.length - 1] += ` ${trimmed.slice(1).trim()}`
+      continue
+    }
+    joinedLines.push(trimmed)
+  }
 
+  for (const line of joinedLines) {
     if (line.length === 0) continue
 
     if (line.startsWith('*')) {
-      if (cleanLines.length === 0 && title === 'Imported') {
+      if (title === 'Imported') {
         title = line.slice(1).trim()
       }
       continue
     }
 
+    const lower = line.toLowerCase()
+    if (lower.startsWith('.subckt') || lower.startsWith('.macro')) {
+      inSubckt++
+      continue
+    }
+    if (lower.startsWith('.ends')) {
+      inSubckt = Math.max(0, inSubckt - 1)
+      continue
+    }
+    if (inSubckt > 0) continue
+
     if (line.startsWith('.')) {
-      if (line.toLowerCase().startsWith('.end')) break
+      if (lower.startsWith('.end')) break
+      if (lower.startsWith('.model')) {
+        const parts = line.split(/\s+/)
+        if (parts.length >= 3) {
+          const modelName = parts[1]
+          const modelType = parts[2].replace(/\(.*$/, '')
+          const paramsStart = line.indexOf('(')
+          const params = paramsStart >= 0 ? line.slice(paramsStart) : ''
+          models.set(modelName, { type: modelType, params })
+        }
+        continue
+      }
+      if (lower.startsWith('.tran') || lower.startsWith('.ac') || lower.startsWith('.dc')) {
+        analysis.push(line)
+        continue
+      }
+      if (
+        lower.startsWith('.ic') ||
+        lower.startsWith('.options') ||
+        lower.startsWith('.lib') ||
+        lower.startsWith('.include')
+      ) {
+        continue
+      }
+
       cleanLines.push(line)
       continue
     }
 
-    cleanLines.push(line)
+    const commentIdx = line.indexOf(';')
+    const clean = commentIdx >= 0 ? line.slice(0, commentIdx).trim() : line
+    if (clean.length === 0) continue
+    cleanLines.push(clean)
   }
 
-  return { title, lines: cleanLines, errors }
+  return { title, lines: cleanLines, models, analysis, errors }
+}
+
+export interface ImportedDevice {
+  type: string
+  reference: string
+  value: string
+  model?: string
+  nodes: string[]
+}
+
+export interface ImportResult {
+  title: string
+  components: Component[]
+  deviceNodes: Map<string, string[]>
+  errors: string[]
+  models: Map<string, { type: string; params: string }>
+  analysis: string[]
+}
+
+const PREFIX_TO_TYPE: Record<string, string> = {
+  R: 'resistor',
+  C: 'capacitor',
+  L: 'inductor',
+  D: 'diode',
+  Q: 'bjt-npn',
+  M: 'mosfet-n',
+  J: 'jfet-n',
+  V: 'voltage-source',
+  I: 'current-source',
+}
+
+const MULTI_NODE_PREFIXES = new Set(['M', 'J', 'X', 'Q'])
+
+export function importNetlist(netlist: string): ImportResult {
+  const { title, lines, errors: parseErrors, models, analysis } = parseNetlist(netlist)
+  const errors: string[] = [...parseErrors]
+  const components: Component[] = []
+  const deviceNodes = new Map<string, string[]>()
+  const usedRefs = new Set<string>()
+  const seenPrefixes = new Map<string, number>()
+
+  function nextRef(prefix: string): string {
+    const n = (seenPrefixes.get(prefix) ?? 0) + 1
+    seenPrefixes.set(prefix, n)
+    return `${prefix}${n}`
+  }
+
+  for (const line of lines) {
+    const parts = line.split(/\s+/)
+    if (parts.length < 2) continue
+
+    const devspec = parts[0]
+    const prefix = devspec.charAt(0).toUpperCase()
+    const refMatch = devspec.match(/^([A-Za-z])(\d+)$/)
+    const type = PREFIX_TO_TYPE[prefix]
+    if (!type) {
+      errors.push(`Unknown device prefix: ${prefix} in "${devspec}"`)
+      continue
+    }
+
+    const ref = refMatch ? devspec : nextRef(prefix)
+    if (usedRefs.has(ref)) {
+      errors.push(`Duplicate reference: ${ref}`)
+      continue
+    }
+    usedRefs.add(ref)
+
+    const remaining = parts.slice(1)
+    let nodeNames: string[] = []
+    let valueText = ''
+
+    const nodeCount =
+      prefix === 'M'
+        ? 4
+        : prefix === 'J'
+          ? 3
+          : prefix === 'Q'
+            ? 3
+            : prefix === 'X'
+              ? remaining.length - 1
+              : 2
+
+    if (prefix === 'X') {
+      nodeNames = remaining.slice(0, -1)
+      valueText = remaining[remaining.length - 1] || ''
+    } else if (MULTI_NODE_PREFIXES.has(prefix) && remaining.length > nodeCount) {
+      nodeNames = remaining.slice(0, nodeCount)
+      const lastToken = remaining[nodeCount]
+      if (lastToken === '0' || lastToken === 'GND' || lastToken.startsWith('N')) {
+        nodeNames = remaining.slice(0, -1)
+        valueText = ''
+      } else if (remaining.length > nodeCount + 1) {
+        nodeNames = remaining.slice(0, nodeCount)
+        valueText = remaining.slice(nodeCount).join(' ')
+      } else {
+        nodeNames = remaining.slice(0, nodeCount)
+        valueText = lastToken
+      }
+    } else if (remaining.length === 2) {
+      nodeNames = [remaining[0], remaining[1]]
+      valueText = ''
+    } else if (remaining.length > 2) {
+      nodeNames = [remaining[0], remaining[1]]
+      valueText = remaining.slice(2).join(' ')
+    } else {
+      errors.push(`Not enough nodes for ${devspec}`)
+      continue
+    }
+
+    const id = ref
+    let component: Component | null = null
+
+    switch (type) {
+      case 'resistor': {
+        const r = Resistor.create(id, ref)
+        r.value = valueText || '1k'
+        component = r
+        break
+      }
+      case 'capacitor': {
+        const c = Capacitor.create(id, ref)
+        c.value = valueText || '100nF'
+        component = c
+        break
+      }
+      case 'inductor': {
+        const l = Inductor.create(id, ref)
+        l.value = valueText || '10mH'
+        component = l
+        break
+      }
+      case 'diode': {
+        const D = {
+          id,
+          reference: ref,
+          value: valueText || '1N4148',
+          type: 'diode',
+          model: undefined,
+        } as Component
+        component = D
+        break
+      }
+      case 'bjt-npn': {
+        const Q = {
+          id,
+          reference: ref,
+          value: '',
+          model: valueText || '2N2222',
+          type: 'bjt-npn',
+        } as Component
+        component = Q
+        break
+      }
+      case 'mosfet-n': {
+        const mos = MosfetN.create(id, ref)
+        mos.model = valueText || 'NMOS'
+        component = mos
+        break
+      }
+      case 'jfet-n': {
+        const jf = JfetN.create(id, ref)
+        jf.model = valueText || 'NJF'
+        component = jf
+        break
+      }
+      case 'voltage-source': {
+        const V = {
+          id,
+          reference: ref,
+          value: valueText || '5V',
+          type: 'voltage-source',
+          model: undefined,
+        } as Component
+        component = V
+        break
+      }
+      case 'current-source': {
+        const I2 = {
+          id,
+          reference: ref,
+          value: valueText || '1mA',
+          type: 'current-source',
+          model: undefined,
+        } as Component
+        component = I2
+        break
+      }
+    }
+
+    if (component) {
+      components.push(component)
+      deviceNodes.set(id, nodeNames)
+    }
+  }
+
+  return { title, components, deviceNodes, errors, models, analysis }
+}
+
+export function applyImportToCircuit(
+  circuit: Circuit,
+  result: ImportResult,
+): Map<string, Component> {
+  const componentMap = new Map<string, Component>()
+
+  for (const component of result.components) {
+    componentMap.set(component.id, component)
+  }
+
+  for (const [compId, nodeNames] of result.deviceNodes) {
+    const comp = componentMap.get(compId)
+    if (!comp) continue
+
+    const pinCount = comp.pins?.length ?? nodeNames.length
+
+    for (let i = 0; i < nodeNames.length && i < pinCount; i++) {
+      let nodeName = nodeNames[i]
+      if (nodeName === '0') nodeName = 'GND'
+
+      let node = circuit.getNode(nodeName)
+      if (!node) {
+        const type = nodeName === 'GND' ? 'ground' : 'signal'
+        node = circuit.addNode(nodeName, type)
+      }
+      circuit.addConnection(compId, i, node.id)
+    }
+  }
+
+  return componentMap
 }

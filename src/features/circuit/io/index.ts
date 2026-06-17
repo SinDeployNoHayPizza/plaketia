@@ -1,2 +1,7 @@
-export { generateNetlist, parseNetlist } from './spiceNetlist.ts'
-export type { ParsedNetlist } from './spiceNetlist.ts'
+export {
+  generateNetlist,
+  importNetlist,
+  parseNetlist,
+  applyImportToCircuit,
+} from './spiceNetlist.ts'
+export type { ParsedNetlist, ImportResult, ImportedDevice } from './spiceNetlist.ts'

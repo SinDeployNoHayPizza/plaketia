@@ -8,8 +8,8 @@ export class Capacitor extends ComponentBase {
 
   get pins(): Pin[] {
     return [
-      { index: 1, name: '+', electricalType: 'passive' },
-      { index: 2, name: '-', electricalType: 'passive' },
+      { index: 0, name: '+', electricalType: 'passive' },
+      { index: 1, name: '-', electricalType: 'passive' },
     ]
   }
 
@@ -39,9 +39,9 @@ export class Capacitor extends ComponentBase {
     })
   }
 
-  static create(id: string): Capacitor {
+  static create(id: string, reference?: string): Capacitor {
     refCounter++
-    return new Capacitor(id, `C${refCounter}`, {
+    return new Capacitor(id, reference ?? `C${refCounter}`, {
       value: '100nF',
       position: { x: 0, y: 0 },
     })
