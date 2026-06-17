@@ -9,6 +9,10 @@ export function SimulationPanel() {
   const [analysis, setAnalysis] = useState<AnalysisType>('op')
   const [stopTime, setStopTime] = useState('10m')
   const [maxStep, setMaxStep] = useState('100u')
+  const [dcSource, setDcSource] = useState('V1')
+  const [dcStart, setDcStart] = useState('0')
+  const [dcStop, setDcStop] = useState('5')
+  const [dcStep, setDcStep] = useState('0.5')
 
   const handleInit = useCallback(async () => {
     await init()
@@ -27,10 +31,15 @@ export function SimulationPanel() {
     if (analysis === 'tran') {
       config.params.stopTime = parseTimeValue(stopTime)
       config.params.maxStep = parseTimeValue(maxStep)
+    } else if (analysis === 'dc') {
+      config.params.sourceName = dcSource
+      config.params.startValue = Number.parseFloat(dcStart) || 0
+      config.params.stopValue = Number.parseFloat(dcStop) || 5
+      config.params.stepValue = Number.parseFloat(dcStep) || 0.5
     }
 
     await run(circuit, state.components, config)
-  }, [analysis, stopTime, maxStep, run])
+  }, [analysis, stopTime, maxStep, dcSource, dcStart, dcStop, dcStep, run])
 
   return (
     <div className="flex flex-col">
@@ -107,6 +116,57 @@ export function SimulationPanel() {
                 type="text"
                 value={maxStep}
                 onChange={(e) => setMaxStep(e.target.value)}
+                className="w-full font-body text-xs bg-surface border border-trace rounded px-1.5 py-1 text-text-primary outline-none focus:border-copper"
+              />
+            </div>
+          </>
+        )}
+
+        {analysis === 'dc' && (
+          <>
+            <DcSourceSelector dcSource={dcSource} setDcSource={setDcSource} />
+            <div>
+              <label
+                htmlFor="sim-dc-start"
+                className="font-body text-[10px] text-text-secondary block mb-0.5"
+              >
+                Start
+              </label>
+              <input
+                id="sim-dc-start"
+                type="text"
+                value={dcStart}
+                onChange={(e) => setDcStart(e.target.value)}
+                className="w-full font-body text-xs bg-surface border border-trace rounded px-1.5 py-1 text-text-primary outline-none focus:border-copper"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="sim-dc-stop"
+                className="font-body text-[10px] text-text-secondary block mb-0.5"
+              >
+                Stop
+              </label>
+              <input
+                id="sim-dc-stop"
+                type="text"
+                value={dcStop}
+                onChange={(e) => setDcStop(e.target.value)}
+                className="w-full font-body text-xs bg-surface border border-trace rounded px-1.5 py-1 text-text-primary outline-none focus:border-copper"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="sim-dc-step"
+                className="font-body text-[10px] text-text-secondary block mb-0.5"
+              >
+                Step
+              </label>
+              <input
+                id="sim-dc-step"
+                type="text"
+                value={dcStep}
+                onChange={(e) => setDcStep(e.target.value)}
                 className="w-full font-body text-xs bg-surface border border-trace rounded px-1.5 py-1 text-text-primary outline-none focus:border-copper"
               />
             </div>
@@ -206,6 +266,55 @@ export function SimulationPanel() {
             {status === 'ready' ? 'Configure and run a simulation' : 'Load the WASM engine first'}
           </div>
         )}
+    </div>
+  )
+}
+
+function DcSourceSelector({
+  dcSource,
+  setDcSource,
+}: {
+  dcSource: string
+  setDcSource: (v: string) => void
+}) {
+  const components = useCircuitStore((s) => s.components)
+  const sources = [...components.values()].filter((c) => {
+    const t = c.type
+    return (
+      t === 'voltage-source' || t === 'function-generator' || t === 'vdd' || t === 'current-source'
+    )
+  })
+
+  return (
+    <div>
+      <label
+        htmlFor="sim-dc-source"
+        className="font-body text-[10px] text-text-secondary block mb-0.5"
+      >
+        Source
+      </label>
+      {sources.length > 0 ? (
+        <select
+          id="sim-dc-source"
+          value={dcSource}
+          onChange={(e) => setDcSource(e.target.value)}
+          className="w-full font-body text-xs bg-surface border border-trace rounded px-1.5 py-1 text-text-primary outline-none focus:border-copper"
+        >
+          {sources.map((c) => (
+            <option key={c.id} value={c.reference}>
+              {c.reference}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          id="sim-dc-source"
+          type="text"
+          value={dcSource}
+          onChange={(e) => setDcSource(e.target.value)}
+          className="w-full font-body text-xs bg-surface border border-trace rounded px-1.5 py-1 text-text-primary outline-none focus:border-copper"
+        />
+      )}
     </div>
   )
 }
