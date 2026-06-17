@@ -1,6 +1,7 @@
 import type { Circuit } from '@/features/circuit/model/Circuit.ts'
 import type { Component } from '@/features/components/base/types.ts'
 import { useCallback, useRef } from 'react'
+import { formatSimulationError } from '../engine/errors.ts'
 import { generateSimulationNetlist } from '../engine/netlist.ts'
 import { NgspiceEngine } from '../engine/ngspice.ts'
 import { parseSimulationOutput } from '../results/parser.ts'
@@ -47,7 +48,7 @@ export function useSimulation() {
         store.setResult(result)
         store.setStatus(result.success ? 'completed' : 'error')
         if (!result.success) {
-          store.setError(result.messages.join('\n') || 'Simulation failed')
+          store.setError(formatSimulationError(output.stdout, output.stderr, result.messages))
         }
         return result
       } catch (e) {
