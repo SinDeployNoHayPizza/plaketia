@@ -1,6 +1,9 @@
 import { Circuit } from '@/features/circuit/model/Circuit.ts'
+import { Ammeter } from '@/features/components/instruments/Ammeter.ts'
+import { Voltmeter } from '@/features/components/instruments/Voltmeter.ts'
 import { Resistor } from '@/features/components/passive/Resistor.ts'
 import { CurrentSource } from '@/features/components/sources/CurrentSource.ts'
+import { FunctionGenerator } from '@/features/components/sources/FunctionGenerator.ts'
 import { VddSource } from '@/features/components/sources/VddSource.ts'
 import { VoltageSource } from '@/features/components/sources/VoltageSource.ts'
 import { describe, expect, it } from 'vitest'
@@ -88,6 +91,72 @@ describe('generateSimulationNetlist', () => {
     expect(netlist).toContain('dc V1 0 5 0.5')
     expect(netlist).toContain('===DC_SWEEP_START===')
     expect(netlist).toContain('===DC_SWEEP_END===')
+  })
+
+  it('ammeter generates a 0V voltage source for current sensing', () => {
+    const circuit = new Circuit('test', 'Test')
+    const am1 = Ammeter.create('am1', 'AM1')
+    addWire(circuit, 'am1', 0, 'n001')
+    addWire(circuit, 'am1', 1, 'n002')
+    const components = new Map([['am1', am1]])
+
+    const netlist = generateSimulationNetlist(circuit, components, { analysis: 'op', params: {} })
+
+    expect(netlist).toContain('VAM1 n001 n002 DC 0')
+  })
+
+  it('voltmeter outputs a SPICE comment line', () => {
+    const circuit = new Circuit('test', 'Test')
+    const vm1 = Voltmeter.create('vm1', 'VM1')
+    addWire(circuit, 'vm1', 0, 'n001')
+    addWire(circuit, 'vm1', 1, 'GND')
+    const components = new Map([['vm1', vm1]])
+
+    const netlist = generateSimulationNetlist(circuit, components, { analysis: 'op', params: {} })
+
+    expect(netlist).toContain('*VM1 voltmeter VM1')
+  })
+
+  it('function generator uses prefix V for SPICE type', () => {
+    const circuit = new Circuit('test', 'Test')
+    const fg1 = FunctionGenerator.create('fg1', 'FG1')
+    fg1.metadata.waveform = 'sine'
+    fg1.metadata.amplitude = '3'
+    fg1.metadata.frequency = '1k'
+    addWire(circuit, 'fg1', 0, 'n001')
+    addWire(circuit, 'fg1', 1, 'GND')
+    const components = new Map([['fg1', fg1]])
+
+    const netlist = generateSimulationNetlist(circuit, components, { analysis: 'op', params: {} })
+
+    expect(netlist).toContain('VFG1 n001 0 SINE')
+    expect(netlist).toContain('SINE(0 3 1k)')
+  })
+
+  it('current source uses prefix I for SPICE type', () => {
+    const circuit = new Circuit('test', 'Test')
+    const i1 = CurrentSource.create('i1', 'I1')
+    i1.value = '1mA'
+    addWire(circuit, 'i1', 0, 'n001')
+    addWire(circuit, 'i1', 1, 'GND')
+    const components = new Map([['i1', i1]])
+
+    const netlist = generateSimulationNetlist(circuit, components, { analysis: 'op', params: {} })
+
+    expect(netlist).toContain('I1 n001 0 1mA')
+  })
+
+  it('VDD source generates correct SPICE line', () => {
+    const circuit = new Circuit('test', 'Test')
+    const vdd = VddSource.create('vdd1', 'VDD1')
+    vdd.value = '3.3V'
+    addWire(circuit, 'vdd1', 0, 'VDD')
+    circuit.addConnection('vdd1', 1, 'GND')
+    const components = new Map([['vdd1', vdd]])
+
+    const netlist = generateSimulationNetlist(circuit, components, { analysis: 'op', params: {} })
+
+    expect(netlist).toContain('VDD1 VDD 0 3.3V')
   })
 
   it('ignores GND node in print list', () => {
