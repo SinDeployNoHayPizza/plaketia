@@ -63,13 +63,14 @@ export function PropertiesPanel() {
         | undefined
       if (!comp) return
       comp.metadata[key] = val
-      let summary = val
-      if (key === 'waveform') {
-        if (val === 'dc') summary = `${comp.metadata.amplitude ?? '5'}V DC`
-        else if (val === 'sine') summary = `SINE ${comp.metadata.frequency ?? '1k'}Hz`
-        else if (val === 'pulse') summary = `PULSE ${comp.metadata.v2 ?? '5'}V`
-        comp.value = summary
-      }
+      const wf = (comp.metadata.waveform as string) ?? 'dc'
+      let summary: string
+      if (wf === 'dc') summary = `${comp.metadata.amplitude ?? '5'}V DC`
+      else if (wf === 'sine') summary = `SINE ${comp.metadata.frequency ?? '1k'}Hz`
+      else if (wf === 'pulse')
+        summary = `PULSE ${comp.metadata.v2 ?? '5'}V ${comp.metadata.period ?? '1m'}`
+      else summary = val
+      comp.value = summary
       updateNodeData(selectedNodeId, {
         ...componentData,
         value: comp.value,
@@ -190,6 +191,14 @@ function FuncGenFields({
           <option value="pulse">PULSE</option>
         </select>
       </div>
+
+      {wf === 'dc' && (
+        <SmallField
+          label="Voltage"
+          value={(metadata.amplitude as string) ?? '5'}
+          onChange={(v) => onChange('amplitude', v)}
+        />
+      )}
 
       {wf === 'sine' && (
         <>
