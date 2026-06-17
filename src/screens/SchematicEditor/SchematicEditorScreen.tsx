@@ -18,6 +18,7 @@ import { GroundNode } from '@/features/schematic/nodes/GroundNode.tsx'
 import { PropertiesPanel } from '@/features/schematic/properties/PropertiesPanel.tsx'
 import { useSchematicStore } from '@/features/schematic/store.ts'
 import { ComponentPalette } from '@/features/schematic/toolbar/ComponentPalette.tsx'
+import { SimulationPanel } from '@/features/simulation/SimulationPanel.tsx'
 
 const nodeTypes = {
   component: ComponentNode,
@@ -168,6 +169,9 @@ export function SchematicEditorScreen() {
         </div>
         <div className="border-t border-trace">
           <ErcPanel />
+        </div>
+        <div className="border-t border-trace">
+          <SimulationPanel />
         </div>
       </div>
     </div>
