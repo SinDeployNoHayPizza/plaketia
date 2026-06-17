@@ -1,5 +1,7 @@
 import { JfetN } from '@/features/components/active/JfetN.ts'
 import { MosfetN } from '@/features/components/active/MosfetN.ts'
+import { Ammeter } from '@/features/components/instruments/Ammeter.ts'
+import { Voltmeter } from '@/features/components/instruments/Voltmeter.ts'
 import { Capacitor } from '@/features/components/passive/Capacitor.ts'
 import { Inductor } from '@/features/components/passive/Inductor.ts'
 import { Resistor } from '@/features/components/passive/Resistor.ts'
@@ -142,6 +144,46 @@ export const GroundSymbol = (_props: SVGProps<SVGSVGElement>) => (
     <line x1="5" y1="15" x2="25" y2="15" stroke="currentColor" strokeWidth="1.5" />
     <line x1="8" y1="21" x2="22" y2="21" stroke="currentColor" strokeWidth="1.5" />
     <line x1="11" y1="27" x2="19" y2="27" stroke="currentColor" strokeWidth="1.5" />
+  </svg>
+)
+
+const VoltmeterSymbol = (_props: SVGProps<SVGSVGElement>) => (
+  <svg aria-hidden={true} viewBox="0 0 80 50" width="100%" height="100%" overflow="visible">
+    <line x1="0" y1="25" x2="15" y2="25" stroke="currentColor" strokeWidth="1.5" />
+    <rect
+      x="15"
+      y="12"
+      width="50"
+      height="26"
+      rx="3"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <text x="40" y="30" textAnchor="middle" fontSize="16" fontWeight="bold" fill="currentColor">
+      V
+    </text>
+    <line x1="65" y1="25" x2="80" y2="25" stroke="currentColor" strokeWidth="1.5" />
+  </svg>
+)
+
+const AmmeterSymbol = (_props: SVGProps<SVGSVGElement>) => (
+  <svg aria-hidden={true} viewBox="0 0 80 50" width="100%" height="100%" overflow="visible">
+    <line x1="0" y1="25" x2="15" y2="25" stroke="currentColor" strokeWidth="1.5" />
+    <rect
+      x="15"
+      y="12"
+      width="50"
+      height="26"
+      rx="3"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <text x="40" y="30" textAnchor="middle" fontSize="16" fontWeight="bold" fill="currentColor">
+      A
+    </text>
+    <line x1="65" y1="25" x2="80" y2="25" stroke="currentColor" strokeWidth="1.5" />
   </svg>
 )
 
@@ -294,6 +336,38 @@ export const componentRegistry: Record<string, ComponentRegistration> = {
     symbol: FunctionGeneratorSymbol,
     getPinName: (i: number) => (i === 0 ? '+' : '-'),
   },
+  voltmeter: {
+    type: 'voltmeter',
+    label: 'Voltmeter',
+    category: 'instrument',
+    defaultReference: 'VM',
+    defaultParams: { value: '0V' },
+    createModel: (id: string) => Voltmeter.create(id),
+    width: 80,
+    height: 50,
+    pins: [
+      { index: 0, x: 0, y: 25, label: '+' },
+      { index: 1, x: 80, y: 25, label: '-' },
+    ],
+    symbol: VoltmeterSymbol,
+    getPinName: (i: number) => (i === 0 ? '+' : '-'),
+  },
+  ammeter: {
+    type: 'ammeter',
+    label: 'Ammeter',
+    category: 'instrument',
+    defaultReference: 'AM',
+    defaultParams: { value: '0A' },
+    createModel: (id: string) => Ammeter.create(id),
+    width: 80,
+    height: 50,
+    pins: [
+      { index: 0, x: 0, y: 25, label: '+' },
+      { index: 1, x: 80, y: 25, label: '-' },
+    ],
+    symbol: AmmeterSymbol,
+    getPinName: (i: number) => (i === 0 ? '+' : '-'),
+  },
   'mosfet-n': {
     type: 'mosfet-n',
     label: 'MOSFET N',
@@ -422,4 +496,5 @@ export const componentCategories: Record<string, Array<keyof typeof componentReg
   passive: ['resistor', 'capacitor', 'inductor'],
   active: ['diode', 'bjt-npn', 'mosfet-n', 'jfet-n'],
   source: ['voltage-source', 'current-source', 'function-generator', 'vdd'],
+  instrument: ['voltmeter', 'ammeter'],
 }

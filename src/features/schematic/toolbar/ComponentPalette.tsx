@@ -6,6 +6,7 @@ const categoryLabels: Record<string, string> = {
   passive: 'Passive',
   active: 'Active',
   source: 'Sources',
+  instrument: 'Instruments',
 }
 
 export function ComponentPalette() {
