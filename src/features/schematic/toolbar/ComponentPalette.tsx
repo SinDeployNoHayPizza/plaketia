@@ -1,4 +1,5 @@
 import type { DragEvent } from 'react'
+import { createElement } from 'react'
 import { componentCategories, componentRegistry } from '../registry.tsx'
 
 const categoryLabels: Record<string, string> = {
@@ -39,7 +40,7 @@ export function ComponentPalette() {
                     overflow="visible"
                   >
                     <g transform={`scale(${Math.min(28 / reg.width, 20 / reg.height)})`}>
-                      {reg.symbol({})}
+                      {createElement(reg.symbol)}
                     </g>
                   </svg>
                 </div>

@@ -11,8 +11,8 @@ import {
   applyNodeChanges,
 } from '@xyflow/react'
 import { create } from 'zustand'
-import type { ComponentNodeData } from '../nodes/ComponentNode.tsx'
-import { componentRegistry } from '../registry.tsx'
+import type { ComponentNodeData } from './nodes/ComponentNode.tsx'
+import { componentRegistry } from './registry.tsx'
 
 let schematicNodeIdCounter = 0
 

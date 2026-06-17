@@ -1,7 +1,7 @@
 import type { Component } from '@/features/components/base/types.ts'
 import { create } from 'zustand'
 import { Circuit } from './model/Circuit.ts'
-import type { CircuitNode, Connection } from './model/types.ts'
+import type { CircuitNode } from './model/types.ts'
 
 interface CircuitState {
   circuit: Circuit | null

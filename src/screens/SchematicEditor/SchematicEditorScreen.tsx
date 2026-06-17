@@ -1,5 +1,6 @@
 import {
   Background,
+  ConnectionMode,
   Controls,
   MiniMap,
   type Node,
@@ -110,7 +111,7 @@ export function SchematicEditorScreen() {
             onDrop={onDrop}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
-            connectionMode="loose"
+            connectionMode={ConnectionMode.Loose}
             selectionMode={SelectionMode.Partial}
             fitView
             deleteKeyCode="Delete"

@@ -1,5 +1,3 @@
-import type { CircuitNode } from '@/features/circuit/model/types.ts'
-
 export interface Pin {
   index: number
   name: string

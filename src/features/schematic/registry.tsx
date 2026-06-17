@@ -1,4 +1,3 @@
-import type { Pin } from '@/features/components/base/types.ts'
 import { Capacitor } from '@/features/components/passive/Capacitor.ts'
 import { Inductor } from '@/features/components/passive/Inductor.ts'
 import { Resistor } from '@/features/components/passive/Resistor.ts'
