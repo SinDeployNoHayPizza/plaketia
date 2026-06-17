@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "eda-architect": {
+      "source": "l3wi/claude-eda",
+      "sourceType": "github",
+      "skillPath": "templates/claude/skills/eda-architect/SKILL.md",
+      "computedHash": "a027d2a6e76ea562077b027c9673626a5c094a592b82b8c7649d139e19cce16f"
+    },
+    "eda-schematics": {
+      "source": "l3wi/claude-eda",
+      "sourceType": "github",
+      "skillPath": "templates/claude/skills/eda-schematics/SKILL.md",
+      "computedHash": "c48420491c2e5199b84b2644aaffb451300be810c1ccc36ff7c2c838205cc208"
+    },
+    "librarian": {
+      "source": "diodeinc/pcb",
+      "sourceType": "github",
+      "skillPath": "skills/librarian/SKILL.md",
+      "computedHash": "4ac90044ed1052e23f42730cd49ca1775bacfd97c0f430cfe16564460f63e711"
+    },
+    "spice": {
+      "source": "aklofas/kicad-happy",
+      "sourceType": "github",
+      "skillPath": "skills/spice/SKILL.md",
+      "computedHash": "c5518b7bc9b42299bbe9944bccb5b8c79c313839373f96e977be7e34f90955d0"
+    },
+    "spice-sim": {
+      "source": "diodeinc/pcb",
+      "sourceType": "github",
+      "skillPath": "skills/spice-sim/SKILL.md",
+      "computedHash": "5ec493dce171532190101ed869bddb88bbd25f417877637afc44d8ca74ae3fba"
+    }
+  }
+}
