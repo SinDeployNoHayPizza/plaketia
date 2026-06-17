@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+@theme {
+  --color-substrate: #e3dac6;
+  --color-silk: #f5f1e9;
+  --color-copper: #c87a3e;
+  --color-copper-dark: #a8612e;
+  --color-copper-light: #e8c8a8;
+  --color-mask: #3a7a34;
+  --color-mask-light: #8fbf8a;
+  --color-trace: #c9bca6;
+  --color-gold: #cfa23e;
+  --color-text-primary: #2b261c;
+  --color-text-secondary: #7b6f5b;
+
+  --font-display: "Syne", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
 *,
 *::before,
 *::after {
@@ -14,8 +32,25 @@ body,
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  font-family: "DM Sans", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-substrate);
+  color: var(--color-text-primary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes trace-pulse {
+    0% {
+      stroke-dashoffset: 200;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .trace-path {
+    stroke-dasharray: 200;
+    animation: trace-pulse 3s ease-in-out infinite;
+  }
 }
