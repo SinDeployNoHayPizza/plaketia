@@ -3,7 +3,10 @@ import { MosfetN } from '@/features/components/active/MosfetN.ts'
 import { Capacitor } from '@/features/components/passive/Capacitor.ts'
 import { Inductor } from '@/features/components/passive/Inductor.ts'
 import { Resistor } from '@/features/components/passive/Resistor.ts'
+import { CurrentSource } from '@/features/components/sources/CurrentSource.ts'
+import { FunctionGenerator } from '@/features/components/sources/FunctionGenerator.ts'
 import { VddSource } from '@/features/components/sources/VddSource.ts'
+import { VoltageSource } from '@/features/components/sources/VoltageSource.ts'
 import type { ComponentType, SVGProps } from 'react'
 
 export interface SchematicPinDef {
@@ -115,6 +118,24 @@ const CurrentSourceSymbol = (_props: SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
+const FunctionGeneratorSymbol = (_props: SVGProps<SVGSVGElement>) => (
+  <svg aria-hidden={true} viewBox="0 0 80 50" width="100%" height="100%" overflow="visible">
+    <line x1="0" y1="25" x2="15" y2="25" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="40" cy="25" r="14" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    <text x="40" y="22" textAnchor="middle" fontSize="12" fontWeight="bold" fill="currentColor">
+      FG
+    </text>
+    <path
+      d="M20,25 Q24,18 28,25 Q32,32 36,25 Q40,18 44,25 Q48,32 52,25 Q56,18 60,25"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1"
+    />
+    <line x1="65" y1="25" x2="80" y2="25" stroke="currentColor" strokeWidth="1.5" />
+    <line x1="65" y1="18" x2="65" y2="32" stroke="currentColor" strokeWidth="1" />
+  </svg>
+)
+
 export const GroundSymbol = (_props: SVGProps<SVGSVGElement>) => (
   <svg aria-hidden={true} viewBox="0 0 30 40" width="100%" height="100%" overflow="visible">
     <line x1="15" y1="0" x2="15" y2="15" stroke="currentColor" strokeWidth="1.5" />
@@ -218,10 +239,7 @@ export const componentRegistry: Record<string, ComponentRegistration> = {
     category: 'source',
     defaultReference: 'V',
     defaultParams: { value: '5V' },
-    createModel: (id: string) => {
-      const V = { id, reference: 'V1', value: '5V', type: 'voltage-source' } as const
-      return V
-    },
+    createModel: (id: string) => VoltageSource.create(id),
     width: 80,
     height: 50,
     pins: [
@@ -237,10 +255,7 @@ export const componentRegistry: Record<string, ComponentRegistration> = {
     category: 'source',
     defaultReference: 'I',
     defaultParams: { value: '1mA' },
-    createModel: (id: string) => {
-      const I = { id, reference: 'I1', value: '1mA', type: 'current-source' } as const
-      return I
-    },
+    createModel: (id: string) => CurrentSource.create(id),
     width: 80,
     height: 50,
     pins: [
@@ -248,6 +263,35 @@ export const componentRegistry: Record<string, ComponentRegistration> = {
       { index: 1, x: 80, y: 25, label: '-' },
     ],
     symbol: CurrentSourceSymbol,
+    getPinName: (i: number) => (i === 0 ? '+' : '-'),
+  },
+  'function-generator': {
+    type: 'function-generator',
+    label: 'FuncGen',
+    category: 'source',
+    defaultReference: 'FG',
+    defaultParams: {
+      value: '5V DC',
+      waveform: 'dc',
+      amplitude: '5',
+      frequency: '1k',
+      offset: '0',
+      v1: '0',
+      v2: '5',
+      delay: '0',
+      rise: '1u',
+      fall: '1u',
+      width: '0.5m',
+      period: '1m',
+    },
+    createModel: (id: string) => FunctionGenerator.create(id),
+    width: 80,
+    height: 50,
+    pins: [
+      { index: 0, x: 0, y: 25, label: '+' },
+      { index: 1, x: 80, y: 25, label: '-' },
+    ],
+    symbol: FunctionGeneratorSymbol,
     getPinName: (i: number) => (i === 0 ? '+' : '-'),
   },
   'mosfet-n': {
@@ -377,5 +421,5 @@ export const vddRegistration = {
 export const componentCategories: Record<string, Array<keyof typeof componentRegistry>> = {
   passive: ['resistor', 'capacitor', 'inductor'],
   active: ['diode', 'bjt-npn', 'mosfet-n', 'jfet-n'],
-  source: ['voltage-source', 'current-source', 'vdd'],
+  source: ['voltage-source', 'current-source', 'function-generator', 'vdd'],
 }
