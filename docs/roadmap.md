@@ -86,12 +86,12 @@
 - [x] Three.js + @react-three/fiber integration
 - [x] Board geometry (FR4 substrate)
 - [x] Copper layer visualization (traces, pads, vias)
-- [ ] Solder mask and silkscreen
+- [x] Solder mask and silkscreen
 - [x] Component 3D models (THT + SMD — generic boxes + pins)
 - [ ] Component 3D models (detailed: axial, radial, DIP, 0805, SOIC, SOT)
 - [x] OrbitControls (rotate, zoom, pan)
-- [ ] Click-to-select linking with schematic
-- [ ] Layer visibility toggles
+- [x] Click-to-select linking with schematic (3D ↔ store, highlighted body)
+- [x] Layer visibility toggles (sidebar checkboxes)
 - [ ] Performance optimization (instanced meshes)
 
 ## Phase 6 — Polish & Extensibility (Estimated: 2 weeks)

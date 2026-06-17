@@ -4,14 +4,36 @@ import type { PCBBoardData } from '../../pcb/model/types.ts'
 import { BoardGeometry } from './BoardGeometry.tsx'
 import { ComponentModel } from './ComponentModel.tsx'
 import { CopperLayer } from './CopperLayer.tsx'
+import { Silkscreen } from './Silkscreen.tsx'
+import { SolderMask } from './SolderMask.tsx'
 
-export function PCB3DCanvas({ boardData }: { boardData: PCBBoardData }) {
+export interface LayerVisibility {
+  board: boolean
+  copperTop: boolean
+  copperBottom: boolean
+  silkscreenTop: boolean
+  solderMask: boolean
+  components: boolean
+}
+
+export function PCB3DCanvas({
+  boardData,
+  visibility,
+  selectedComponentId,
+  onComponentClick,
+}: {
+  boardData: PCBBoardData
+  visibility: LayerVisibility
+  selectedComponentId?: string | null
+  onComponentClick?: (componentId: string) => void
+}) {
   const size = Math.max(boardData.width, boardData.height)
   const camDist = size * 1.2
 
   return (
     <div className="w-full h-full">
       <Canvas
+        onPointerMissed={() => onComponentClick?.('')}
         camera={{
           position: [camDist * 0.6, -camDist * 0.6, camDist],
           fov: 45,
@@ -37,13 +59,21 @@ export function PCB3DCanvas({ boardData }: { boardData: PCBBoardData }) {
           infiniteGrid
         />
 
-        <BoardGeometry boardData={boardData} />
-        <CopperLayer boardData={boardData} layer="top" />
-        <CopperLayer boardData={boardData} layer="bottom" />
-
-        {boardData.placedComponents.map((comp) => (
-          <ComponentModel key={comp.componentId} component={comp} />
-        ))}
+        {visibility.board && <BoardGeometry boardData={boardData} />}
+        {visibility.solderMask && <SolderMask boardData={boardData} layer="top" />}
+        {visibility.solderMask && <SolderMask boardData={boardData} layer="bottom" />}
+        {visibility.copperTop && <CopperLayer boardData={boardData} layer="top" />}
+        {visibility.copperBottom && <CopperLayer boardData={boardData} layer="bottom" />}
+        {visibility.silkscreenTop && <Silkscreen boardData={boardData} />}
+        {visibility.components &&
+          boardData.placedComponents.map((comp) => (
+            <ComponentModel
+              key={comp.componentId}
+              component={comp}
+              selected={comp.componentId === selectedComponentId}
+              onClick={onComponentClick}
+            />
+          ))}
 
         <OrbitControls
           enableDamping

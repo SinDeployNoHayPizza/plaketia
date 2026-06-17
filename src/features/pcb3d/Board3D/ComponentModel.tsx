@@ -2,9 +2,18 @@ import { getFootprint } from '../../pcb/model/Footprint.ts'
 import type { PlacedComponent } from '../../pcb/model/types.ts'
 
 const BODY_COLOR = '#222222'
+const BODY_HIGHLIGHT = '#4a90d9'
 const PIN_COLOR = '#c0c0c0'
 
-export function ComponentModel({ component }: { component: PlacedComponent }) {
+export function ComponentModel({
+  component,
+  selected,
+  onClick,
+}: {
+  component: PlacedComponent
+  selected?: boolean
+  onClick?: (componentId: string) => void
+}) {
   const fp = getFootprint(component.footprintName)
   if (!fp) return null
 
@@ -24,7 +33,14 @@ export function ComponentModel({ component }: { component: PlacedComponent }) {
           <meshStandardMaterial color={PIN_COLOR} metalness={0.7} roughness={0.3} />
         </mesh>
       ))}
-      <mesh position={[0, 0, (fp.height || 4) / 2]}>
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: 3D mesh */}
+      <mesh
+        position={[0, 0, (fp.height || 4) / 2]}
+        onClick={(e) => {
+          e.stopPropagation()
+          onClick?.(component.componentId)
+        }}
+      >
         <boxGeometry
           args={[
             fp.outline.reduce((max, p) => Math.max(max, Math.abs(p.x)), 0) * 1.5 || 4,
@@ -32,7 +48,7 @@ export function ComponentModel({ component }: { component: PlacedComponent }) {
             fp.height || 4,
           ]}
         />
-        <meshStandardMaterial color={BODY_COLOR} roughness={0.8} />
+        <meshStandardMaterial color={selected ? BODY_HIGHLIGHT : BODY_COLOR} roughness={0.8} />
       </mesh>
     </group>
   )
