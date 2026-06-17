@@ -14,34 +14,34 @@
 - [x] AGENTS.md
 - [x] opencode configuration
 
-## Phase 1 — Foundation (Estimated: 2 weeks)
+## Phase 1 — Foundation ✅
 
 **Goal**: Scaffold the project, implement core data model, basic UI shell.
 
-- [ ] `bun create vite` with React 19 + TypeScript
-- [ ] Configure Biome, Vitest, Tailwind CSS 4
-- [ ] Set up GitHub repo with GitHub Flow
-- [ ] Implement `Circuit`, `CircuitNode`, `Connection` models
-- [ ] Implement abstract `Component` base class
-- [ ] Implement passive components: Resistor, Capacitor, Inductor
-- [ ] SPICE netlist serialization/deserialization
-- [ ] Shared UI components: Button, Dialog, SidePanel, Toolbar
-- [ ] App layout with sidebar + canvas area
-- [ ] ProjectManager screen (create/open/save projects)
-- [ ] Unit tests for circuit model and serialization
+- [x] `bun create vite` with React 19 + TypeScript
+- [x] Configure Biome, Vitest, Tailwind CSS 4
+- [x] Set up GitHub repo with GitHub Flow
+- [x] Implement `Circuit`, `CircuitNode`, `Connection` models
+- [x] Implement abstract `Component` base class
+- [x] Implement passive components: Resistor, Capacitor, Inductor
+- [x] SPICE netlist serialization
+- [x] Shared UI components: Button, Dialog, SidePanel, Toolbar
+- [x] App layout with sidebar + canvas area
+- [x] ProjectManager screen (create/open/save projects)
+- [x] Unit tests for circuit model and serialization
 
-## Phase 2 — Schematic Editor (Estimated: 2 weeks)
+## Phase 2 — Schematic Editor ✅
 
 **Goal**: Fully functional schematic capture with React Flow.
 
-- [ ] Integrate `@xyflow/react`
-- [ ] Custom nodes for all passive + active components
-- [ ] Wire drawing (edges between pin handles)
-- [ ] Drag-and-drop from toolbar to canvas
-- [ ] Properties panel (edit values, models, references)
-- [ ] Ground node, power symbols, labels
+- [x] Integrate `@xyflow/react`
+- [x] Custom nodes for all passive + active components
+- [x] Wire drawing (edges between pin handles)
+- [x] Drag-and-drop from toolbar to canvas
+- [x] Properties panel (edit values, models, references)
+- [x] Ground node, power symbols, labels
 - [ ] ERC validation (Electrical Rule Check)
-- [ ] Export to SPICE netlist
+- [x] Export to SPICE netlist
 - [ ] Import from SPICE netlist
 - [ ] Undo/redo for schematic edits
 - [ ] Integration tests: schematic → netlist
