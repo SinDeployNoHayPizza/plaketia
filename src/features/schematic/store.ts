@@ -6,6 +6,7 @@ import type {
 } from '@/features/circuit/model/types.ts'
 import { useCircuitStore } from '@/features/circuit/store.ts'
 import type { Component } from '@/features/components/base/types.ts'
+import { VddSource } from '@/features/components/sources/VddSource.ts'
 import {
   type Connection,
   type Edge,
@@ -111,6 +112,7 @@ export interface SchematicState {
 
   addComponentAtPosition: (componentType: string, position: XYPosition) => void
   addGroundAtPosition: (position: XYPosition) => void
+  addVddAtPosition: (position: XYPosition) => void
   addImportedComponentNode: (
     compId: string,
     componentType: string,
@@ -120,6 +122,7 @@ export interface SchematicState {
     position: XYPosition,
   ) => void
   removeNodeAndEdges: (nodeId: string) => void
+  removeEdge: (edgeId: string) => void
   updateNodeData: (nodeId: string, data: Partial<ComponentNodeData>) => void
   moveNode: (nodeId: string, position: XYPosition) => void
   clear: () => void
@@ -164,13 +167,20 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     const sourceCompId = connection.source
     const targetCompId = connection.target
 
-    const isGroundSource = connection.sourceHandle === 'pin-0' && isGroundNode(sourceCompId)
-    const isGroundTarget = connection.targetHandle === 'pin-0' && isGroundNode(targetCompId)
+    const isGroundSource =
+      connection.sourceHandle === 'pin-0' && isPowerNode(sourceCompId, 'ground')
+    const isGroundTarget =
+      connection.targetHandle === 'pin-0' && isPowerNode(targetCompId, 'ground')
+    const isVddSource = connection.sourceHandle === 'pin-0' && isPowerNode(sourceCompId, 'vdd')
+    const isVddTarget = connection.targetHandle === 'pin-0' && isPowerNode(targetCompId, 'vdd')
 
     let circuitNodeId: string | undefined
 
     if (isGroundSource || isGroundTarget) {
       circuitNodeId = 'GND'
+    } else if (isVddSource || isVddTarget) {
+      circuitNodeId = 'VDD'
+      circuitStore.addNode('VDD', 'signal')
     } else {
       const sourceNode = getNodeIdForPinInternal(circuit, sourceCompId, sourcePin, edges)
       const targetNode = getNodeIdForPinInternal(circuit, targetCompId, targetPin, edges)
@@ -305,6 +315,35 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
     })
   },
 
+  addVddAtPosition: (position: XYPosition) => {
+    const { nodes, edges } = get()
+    const undo = createUndoEntry(nodes, edges)
+    const circuitStore = useCircuitStore.getState()
+    const nodeId = nextSchematicId()
+    const component = VddSource.create(nodeId)
+    component.position = { x: position.x, y: position.y }
+    circuitStore.addComponent(component)
+    circuitStore.addNode('VDD', 'signal')
+    circuitStore.connect(component.id, 1, 'GND')
+
+    const newNode: Node = {
+      id: nodeId,
+      type: 'vdd',
+      position: { x: position.x - 15, y: position.y - 20 },
+      data: {
+        reference: component.reference,
+        value: component.value,
+        componentType: 'vdd',
+      } satisfies ComponentNodeData,
+    }
+
+    set({
+      nodes: [...nodes, newNode],
+      undoStack: [...get().undoStack, undo],
+      redoStack: [],
+    })
+  },
+
   addImportedComponentNode: (
     compId: string,
     componentType: string,
@@ -351,6 +390,36 @@ export const useSchematicStore = create<SchematicState>((set, get) => ({
       nodes: nodes.filter((n) => n.id !== nodeId),
       edges: remainingEdges,
       selectedNodeId: get().selectedNodeId === nodeId ? null : get().selectedNodeId,
+      undoStack: [...get().undoStack, undo],
+      redoStack: [],
+    })
+  },
+
+  removeEdge: (edgeId: string) => {
+    const { nodes, edges } = get()
+    const edge = edges.find((e) => e.id === edgeId)
+    if (!edge) return
+
+    const undo = createUndoEntry(nodes, edges)
+    const circuitStore = useCircuitStore.getState()
+    const circuit = circuitStore.circuit
+    if (!circuit) return
+
+    const sourcePin = pinHandleToIndex(edge.sourceHandle ?? null)
+    const targetPin = pinHandleToIndex(edge.targetHandle ?? null)
+
+    for (const [compId, pin] of [
+      [edge.source, sourcePin] as const,
+      [edge.target, targetPin] as const,
+    ]) {
+      if (pin === null) continue
+      const conns = circuit.getConnectionsForComponent(compId)
+      const conn = conns.find((c) => c.pinIndex === pin)
+      if (conn) circuit.removeConnection(conn.id)
+    }
+
+    set({
+      edges: edges.filter((e) => e.id !== edgeId),
       undoStack: [...get().undoStack, undo],
       redoStack: [],
     })
@@ -456,6 +525,7 @@ function mergeCircuitNodes(
 ): void {
   if (sourceNodeId === targetNodeId) return
   if (sourceNodeId === 'GND' || targetNodeId === 'GND') return
+  if (sourceNodeId === 'VDD' || targetNodeId === 'VDD') return
 
   for (const conn of circuit.getConnectionsForNode(targetNodeId)) {
     circuit.removeConnection(conn.id)
@@ -463,6 +533,7 @@ function mergeCircuitNodes(
   }
 }
 
-function isGroundNode(nodeId: string): boolean {
-  return nodeId.startsWith('sc-')
+function isPowerNode(nodeId: string, type: string): boolean {
+  const state = useSchematicStore.getState()
+  return state.nodes.some((n) => n.id === nodeId && n.type === type)
 }

@@ -3,6 +3,7 @@ import { MosfetN } from '@/features/components/active/MosfetN.ts'
 import { Capacitor } from '@/features/components/passive/Capacitor.ts'
 import { Inductor } from '@/features/components/passive/Inductor.ts'
 import { Resistor } from '@/features/components/passive/Resistor.ts'
+import { VddSource } from '@/features/components/sources/VddSource.ts'
 import type { ComponentType, SVGProps } from 'react'
 
 export interface SchematicPinDef {
@@ -284,6 +285,19 @@ export const componentRegistry: Record<string, ComponentRegistration> = {
     symbol: JfetNSymbol,
     getPinName: (i: number) => ['D', 'G', 'S'][i] ?? `P${i}`,
   },
+  vdd: {
+    type: 'vdd',
+    label: 'VDD',
+    category: 'source',
+    defaultReference: 'VDD',
+    defaultParams: { value: '5V' },
+    createModel: (id: string) => VddSource.create(id),
+    width: 30,
+    height: 40,
+    pins: [{ index: 0, x: 15, y: 40, label: 'VDD' }],
+    symbol: VddSymbol,
+    getPinName: (_i: number) => 'VDD',
+  },
 }
 
 function MosfetNSymbol(_props: SVGProps<SVGSVGElement>) {
@@ -323,6 +337,15 @@ function JfetNSymbol(_props: SVGProps<SVGSVGElement>) {
   )
 }
 
+export function VddSymbol(_props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg aria-hidden={true} viewBox="0 0 30 40" width="100%" height="100%" overflow="visible">
+      <line x1="15" y1="40" x2="15" y2="20" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="5" y1="20" x2="25" y2="20" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
 export const groundRegistration = {
   type: 'ground',
   label: 'Ground',
@@ -334,8 +357,25 @@ export const groundRegistration = {
   symbol: GroundSymbol,
 }
 
+export const vddRegistration = {
+  type: 'vdd',
+  label: 'VDD',
+  category: 'source' as const,
+  defaultReference: 'VDD',
+  defaultParams: { value: '5V' },
+  createModel: (id: string) => VddSource.create(id),
+  width: 30,
+  height: 40,
+  pins: [
+    { index: 0, x: 15, y: 40, label: 'VDD' },
+    { index: 1, x: 15, y: 0, label: 'GND' },
+  ],
+  symbol: VddSymbol,
+  getPinName: (i: number) => (i === 0 ? 'VDD' : 'GND'),
+}
+
 export const componentCategories: Record<string, Array<keyof typeof componentRegistry>> = {
   passive: ['resistor', 'capacitor', 'inductor'],
   active: ['diode', 'bjt-npn', 'mosfet-n', 'jfet-n'],
-  source: ['voltage-source', 'current-source'],
+  source: ['voltage-source', 'current-source', 'vdd'],
 }

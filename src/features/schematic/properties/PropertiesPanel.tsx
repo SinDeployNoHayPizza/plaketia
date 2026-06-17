@@ -44,6 +44,7 @@ export function PropertiesPanel() {
   }
 
   const isGround = selectedNode.type === 'ground'
+  const isVdd = selectedNode.type === 'vdd'
   const ref = componentData.reference ?? ''
   const value = componentData.value ?? ''
   const model = componentData.model ?? ''
@@ -56,6 +57,26 @@ export function PropertiesPanel() {
 
       {isGround ? (
         <div className="text-gray-500">Ground node — no properties</div>
+      ) : isVdd ? (
+        <>
+          <Field
+            label="Reference"
+            value={ref}
+            onChange={(v) => {
+              if (selectedNodeId && componentData) {
+                updateNodeData(selectedNodeId, { ...componentData, reference: v })
+                const comp = circuitComponents.get(selectedNodeId)
+                if (comp) {
+                  comp.reference = v
+                  addComponent(comp)
+                }
+              }
+            }}
+          />
+          <Field label="Voltage" value={value} onChange={handleValueChange} />
+          <div className="text-[10px] text-gray-400 mt-1">Type: vdd</div>
+          <div className="text-[10px] text-gray-400">ID: {selectedNodeId}</div>
+        </>
       ) : (
         <>
           <Field label="Reference" value={ref} readOnly />

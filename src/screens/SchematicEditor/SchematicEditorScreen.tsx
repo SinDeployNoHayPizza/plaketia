@@ -15,6 +15,7 @@ import { WireEdge } from '@/features/schematic/edges/WireEdge.tsx'
 import { ErcPanel } from '@/features/schematic/erc/ErcPanel.tsx'
 import { ComponentNode } from '@/features/schematic/nodes/ComponentNode.tsx'
 import { GroundNode } from '@/features/schematic/nodes/GroundNode.tsx'
+import { VddNode } from '@/features/schematic/nodes/VddNode.tsx'
 import { PropertiesPanel } from '@/features/schematic/properties/PropertiesPanel.tsx'
 import { useSchematicStore } from '@/features/schematic/store.ts'
 import { ComponentPalette } from '@/features/schematic/toolbar/ComponentPalette.tsx'
@@ -23,6 +24,7 @@ import { SimulationPanel } from '@/features/simulation/SimulationPanel.tsx'
 const nodeTypes = {
   component: ComponentNode,
   ground: GroundNode,
+  vdd: VddNode,
 }
 
 const edgeTypes = {
@@ -37,7 +39,9 @@ export function SchematicEditorScreen() {
   const onConnect = useSchematicStore((s) => s.onConnect)
   const addComponentAtPosition = useSchematicStore((s) => s.addComponentAtPosition)
   const addGroundAtPosition = useSchematicStore((s) => s.addGroundAtPosition)
+  const addVddAtPosition = useSchematicStore((s) => s.addVddAtPosition)
   const removeNodeAndEdges = useSchematicStore((s) => s.removeNodeAndEdges)
+  const removeEdge = useSchematicStore((s) => s.removeEdge)
   const selectedNodeId = useSchematicStore((s) => s.selectedNodeId)
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
@@ -64,11 +68,13 @@ export function SchematicEditorScreen() {
 
       if (type === 'ground') {
         addGroundAtPosition(position)
+      } else if (type === 'vdd') {
+        addVddAtPosition(position)
       } else {
         addComponentAtPosition(type, position)
       }
     },
-    [addComponentAtPosition, addGroundAtPosition],
+    [addComponentAtPosition, addGroundAtPosition, addVddAtPosition],
   )
 
   const onNodeClick: NodeMouseHandler = useCallback((_event: React.MouseEvent, node: Node) => {
@@ -111,9 +117,14 @@ export function SchematicEditorScreen() {
         if (selectedNodeId) {
           removeNodeAndEdges(selectedNodeId)
         }
+        for (const edge of edges) {
+          if (edge.selected) {
+            removeEdge(edge.id)
+          }
+        }
       }
     },
-    [selectedNodeId, removeNodeAndEdges],
+    [selectedNodeId, removeNodeAndEdges, edges, removeEdge],
   )
 
   return (

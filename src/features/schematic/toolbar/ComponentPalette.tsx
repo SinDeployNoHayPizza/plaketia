@@ -1,6 +1,6 @@
 import type { DragEvent } from 'react'
 import { createElement } from 'react'
-import { componentCategories, componentRegistry } from '../registry.tsx'
+import { componentCategories, componentRegistry, vddRegistration } from '../registry.tsx'
 
 const categoryLabels: Record<string, string> = {
   passive: 'Passive',
@@ -68,6 +68,18 @@ export function ComponentPalette() {
             </svg>
           </div>
           <span className="text-gray-700">Ground</span>
+        </div>
+        <div
+          draggable
+          onDragStart={(e) => onDragStart(e, 'vdd')}
+          className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab active:cursor-grabbing hover:bg-indigo-50 transition-colors"
+        >
+          <div className="w-8 h-6 text-gray-700 shrink-0 flex items-center justify-center">
+            <svg aria-hidden={true} viewBox="0 0 30 40" width="20" height="18" overflow="visible">
+              {createElement(vddRegistration.symbol)}
+            </svg>
+          </div>
+          <span className="text-gray-700">VDD</span>
         </div>
       </div>
     </div>
