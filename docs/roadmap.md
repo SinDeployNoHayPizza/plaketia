@@ -88,7 +88,7 @@
 - [x] Copper layer visualization (traces, pads, vias)
 - [x] Solder mask and silkscreen
 - [x] Component 3D models (THT + SMD — generic boxes + pins)
-- [ ] Component 3D models (detailed: axial, radial, DIP, 0805, SOIC, SOT)
+- [x] Component 3D models (axial-resistor, radial-capacitor, DIP-8, TO-92, TO-220, 0805, SOIC-8, SOT-23)
 - [x] OrbitControls (rotate, zoom, pan)
 - [x] Click-to-select linking with schematic (3D ↔ store, highlighted body)
 - [x] Layer visibility toggles (sidebar checkboxes)
