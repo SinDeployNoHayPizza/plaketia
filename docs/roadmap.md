@@ -68,16 +68,16 @@
 
 **Goal**: Place components on single-sided PCB, route traces, export Gerber.
 
-- [ ] PCBBoard model + Zustand store
-- [ ] Footprint definitions (THT + SMD)
-- [ ] PCB canvas (2D SVG with grid, zoom/pan)
-- [ ] Component placement from netlist
-- [ ] Manual trace routing (click-to-route, vias)
-- [ ] DRC (Design Rule Checking)
-- [ ] Netlist highlighting
-- [ ] Gerber RS-274X export
-- [ ] BOM export (CSV)
-- [ ] Tests for PCB model and export
+- [x] PCBBoard model + Zustand store
+- [x] Footprint definitions (THT + SMD)
+- [x] PCB canvas (2D SVG with grid, zoom/pan)
+- [x] Component placement from netlist
+- [x] Manual trace routing (click-to-route, snap-to-grid, orthogonal rubber-band preview, vias)
+- [x] DRC (clearance, trace width, annular ring, drill size, board edge)
+- [x] Netlist highlighting (rat's nest airwires)
+- [x] Gerber RS-274X export (top/bottom copper, silkscreen, outline, drill)
+- [x] BOM export (CSV)
+- [x] Tests for PCB model, DRC, Gerber, and BOM (28 tests)
 
 ## Phase 5 — 3D PCB Viewer (Estimated: 2 weeks)
 

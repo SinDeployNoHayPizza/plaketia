@@ -1,6 +1,8 @@
+import { getFootprint } from './Footprint.ts'
 import type {
   DRCViolation,
   DesignRules,
+  FootprintPad,
   PCBBoardData,
   PCBLayer,
   PCBMetadata,
@@ -35,6 +37,109 @@ const defaultDesignRules: DesignRules = {
   minClearance: 0.254,
   minAnnularRing: 0.15,
   minDrillDiameter: 0.3,
+}
+
+function sqDist(a: Point, b: Point): number {
+  const dx = a.x - b.x
+  const dy = a.y - b.y
+  return dx * dx + dy * dy
+}
+
+function pointToSegmentDist(p: Point, a: Point, b: Point): number {
+  const abx = b.x - a.x
+  const aby = b.y - a.y
+  const len2 = abx * abx + aby * aby
+  if (len2 === 0) return Math.sqrt(sqDist(p, a))
+  let t = ((p.x - a.x) * abx + (p.y - a.y) * aby) / len2
+  t = Math.max(0, Math.min(1, t))
+  return Math.sqrt(sqDist(p, { x: a.x + t * abx, y: a.y + t * aby }))
+}
+
+function segmentToSegmentDist(a: Point, b: Point, c: Point, d: Point): number {
+  return Math.min(
+    pointToSegmentDist(a, c, d),
+    pointToSegmentDist(b, c, d),
+    pointToSegmentDist(c, a, b),
+    pointToSegmentDist(d, a, b),
+  )
+}
+
+function trackPadDist(
+  trackPoints: Point[],
+  padPos: Point,
+  padSize: { width: number; height: number },
+  padShape: 'round' | 'rect' | 'oval',
+): number {
+  let minDist = Number.POSITIVE_INFINITY
+  for (let i = 0; i < trackPoints.length - 1; i++) {
+    const a = trackPoints[i]
+    const b = trackPoints[i + 1]
+    const d =
+      padShape === 'round'
+        ? pointToSegmentDist(padPos, a, b) - Math.max(padSize.width, padSize.height) / 2
+        : rectSegmentDist(padPos, padSize, a, b)
+    if (d < minDist) minDist = d
+  }
+  return minDist
+}
+
+function rectSegmentDist(
+  center: Point,
+  size: { width: number; height: number },
+  a: Point,
+  b: Point,
+): number {
+  const halfW = size.width / 2
+  const halfH = size.height / 2
+  const corners: Point[] = [
+    { x: center.x - halfW, y: center.y - halfH },
+    { x: center.x + halfW, y: center.y - halfH },
+    { x: center.x - halfW, y: center.y + halfH },
+    { x: center.x + halfW, y: center.y + halfH },
+  ]
+  const edges = [
+    [0, 1],
+    [1, 3],
+    [3, 2],
+    [2, 0],
+  ]
+  let minDist = Number.POSITIVE_INFINITY
+  for (const [i, j] of edges) {
+    const d = segmentToSegmentDist(corners[i], corners[j], a, b)
+    if (d < minDist) minDist = d
+  }
+  for (const c of corners) {
+    const d = pointToSegmentDist(c, a, b)
+    if (d < minDist) minDist = d
+  }
+  return minDist
+}
+
+function pointToPadDist(
+  p: Point,
+  padPos: Point,
+  padSize: { width: number; height: number },
+  padShape: 'round' | 'rect' | 'oval',
+): number {
+  if (padShape === 'round') {
+    const r = Math.max(padSize.width, padSize.height) / 2
+    return Math.max(0, Math.sqrt(sqDist(p, padPos)) - r)
+  }
+  const halfW = padSize.width / 2
+  const halfH = padSize.height / 2
+  const dx = Math.max(0, Math.abs(p.x - padPos.x) - halfW)
+  const dy = Math.max(0, Math.abs(p.y - padPos.y) - halfH)
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+function getPadWorldPos(comp: PlacedComponent, pad: FootprintPad): Point {
+  const rad = (comp.rotation * Math.PI) / 180
+  const cos = Math.cos(rad)
+  const sin = Math.sin(rad)
+  return {
+    x: comp.position.x + pad.position.x * cos - pad.position.y * sin,
+    y: comp.position.y + pad.position.x * sin + pad.position.y * cos,
+  }
 }
 
 export class PCBBoard {
@@ -149,35 +254,176 @@ export class PCBBoard {
 
   runDRC(): DRCViolation[] {
     const violations: DRCViolation[] = []
+    const dr = this.designRules
+    const edgeMargin = dr.minClearance
 
     for (const track of this.tracks) {
-      if (track.width < this.designRules.minTraceWidth) {
+      if (track.width < dr.minTraceWidth) {
         violations.push({
           type: 'min-width',
-          message: `Track ${track.id} width (${track.width}mm) below minimum (${this.designRules.minTraceWidth}mm)`,
+          message: `Track ${track.id} width (${track.width}mm) below minimum (${dr.minTraceWidth}mm)`,
           position: track.points[0],
           severity: 'error',
         })
       }
+
+      for (const p of track.points) {
+        if (
+          p.x < edgeMargin ||
+          p.y < edgeMargin ||
+          p.x > this.width - edgeMargin ||
+          p.y > this.height - edgeMargin
+        ) {
+          violations.push({
+            type: 'board-edge',
+            message: `Track ${track.id} too close to board edge`,
+            position: p,
+            severity: 'warning',
+          })
+          break
+        }
+      }
+    }
+
+    for (let i = 0; i < this.tracks.length; i++) {
+      for (let j = i + 1; j < this.tracks.length; j++) {
+        const ta = this.tracks[i]
+        const tb = this.tracks[j]
+        if (ta.layer !== tb.layer) continue
+        let tooClose = false
+        for (let pi = 0; pi < ta.points.length - 1 && !tooClose; pi++) {
+          for (let pj = 0; pj < tb.points.length - 1 && !tooClose; pj++) {
+            const d = segmentToSegmentDist(
+              ta.points[pi],
+              ta.points[pi + 1],
+              tb.points[pj],
+              tb.points[pj + 1],
+            )
+            if (d < dr.minClearance) {
+              violations.push({
+                type: 'clearance',
+                message: `Clearance violation between ${ta.id} and ${tb.id} (${d.toFixed(3)}mm < ${dr.minClearance}mm)`,
+                position: ta.points[pi],
+                severity: 'error',
+              })
+              tooClose = true
+            }
+          }
+        }
+      }
     }
 
     for (const via of this.vias) {
-      if (via.drillDiameter < this.designRules.minDrillDiameter) {
+      if (via.drillDiameter < dr.minDrillDiameter) {
         violations.push({
           type: 'drill-size',
-          message: `Via ${via.id} drill (${via.drillDiameter}mm) below minimum (${this.designRules.minDrillDiameter}mm)`,
+          message: `Via ${via.id} drill (${via.drillDiameter}mm) below minimum (${dr.minDrillDiameter}mm)`,
           position: via.position,
           severity: 'error',
         })
       }
       const ring = (via.outerDiameter - via.drillDiameter) / 2
-      if (ring < this.designRules.minAnnularRing) {
+      if (ring < dr.minAnnularRing) {
         violations.push({
           type: 'annular-ring',
-          message: `Via ${via.id} annular ring (${ring.toFixed(3)}mm) below minimum (${this.designRules.minAnnularRing}mm)`,
+          message: `Via ${via.id} annular ring (${ring.toFixed(3)}mm) below minimum (${dr.minAnnularRing}mm)`,
           position: via.position,
           severity: 'error',
         })
+      }
+      if (
+        via.position.x < edgeMargin ||
+        via.position.y < edgeMargin ||
+        via.position.x > this.width - edgeMargin ||
+        via.position.y > this.height - edgeMargin
+      ) {
+        violations.push({
+          type: 'board-edge',
+          message: `Via ${via.id} too close to board edge`,
+          position: via.position,
+          severity: 'warning',
+        })
+      }
+
+      for (const track of this.tracks) {
+        const d = pointToSegmentDist(
+          via.position,
+          track.points[0],
+          track.points[track.points.length - 1],
+        )
+        if (d < dr.minClearance) {
+          violations.push({
+            type: 'clearance',
+            message: `Clearance violation between ${via.id} and ${track.id} (${d.toFixed(3)}mm < ${dr.minClearance}mm)`,
+            position: via.position,
+            severity: 'error',
+          })
+        }
+      }
+    }
+
+    for (const comp of this.placedComponents) {
+      if (
+        comp.position.x < edgeMargin ||
+        comp.position.y < edgeMargin ||
+        comp.position.x > this.width - edgeMargin ||
+        comp.position.y > this.height - edgeMargin
+      ) {
+        violations.push({
+          type: 'board-edge',
+          message: `Component ${comp.reference} too close to board edge`,
+          position: comp.position,
+          severity: 'warning',
+        })
+      }
+
+      const fp = getFootprint(comp.footprintName)
+      if (!fp) continue
+
+      for (const pad of fp.pads) {
+        const padPos = getPadWorldPos(comp, pad)
+
+        for (const track of this.tracks) {
+          const d = trackPadDist(track.points, padPos, pad.size, pad.shape)
+          if (d < dr.minClearance) {
+            violations.push({
+              type: 'clearance',
+              message: `Clearance violation between ${comp.reference}.${pad.name} and ${track.id} (${d.toFixed(3)}mm < ${dr.minClearance}mm)`,
+              position: padPos,
+              severity: 'error',
+            })
+          }
+        }
+
+        for (const via of this.vias) {
+          const d = pointToPadDist(via.position, padPos, pad.size, pad.shape)
+          if (d < dr.minClearance) {
+            violations.push({
+              type: 'clearance',
+              message: `Clearance violation between ${comp.reference}.${pad.name} and ${via.id} (${d.toFixed(3)}mm < ${dr.minClearance}mm)`,
+              position: via.position,
+              severity: 'error',
+            })
+          }
+        }
+
+        for (const other of this.placedComponents) {
+          if (other.componentId === comp.componentId) continue
+          const ofp = getFootprint(other.footprintName)
+          if (!ofp) continue
+          for (const opad of ofp.pads) {
+            const opadPos = getPadWorldPos(other, opad)
+            const d = pointToPadDist(padPos, opadPos, opad.size, opad.shape)
+            if (d < dr.minClearance) {
+              violations.push({
+                type: 'clearance',
+                message: `Clearance violation between ${comp.reference}.${pad.name} and ${other.reference}.${opad.name} (${d.toFixed(3)}mm < ${dr.minClearance}mm)`,
+                position: padPos,
+                severity: 'error',
+              })
+            }
+          }
+        }
       }
     }
 

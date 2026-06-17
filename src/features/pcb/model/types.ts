@@ -53,6 +53,7 @@ export interface Footprint {
 export interface PlacedComponent {
   componentId: string
   reference: string
+  type: string
   footprintName: string
   position: Point
   rotation: number
@@ -81,6 +82,12 @@ export interface DRCViolation {
   message: string
   position: Point
   severity: 'error' | 'warning'
+}
+
+export interface Airwire {
+  start: Point
+  end: Point
+  netId: string
 }
 
 export interface PCBSnapshot {
