@@ -48,31 +48,31 @@
 - [x] MOSFET N / JFET N component models + symbols
 - [x] SPICE parser extension: M, J, .model, .subckt, line continuation, extended sources
 
-## Phase 3 — Simulation & Instruments (Estimated: 2 weeks)
+## Phase 3 — Simulation & Instruments ✅
 
 **Goal**: Run SPICE simulations in-browser, display results with virtual instruments.
 
-- [ ] Integrate `ngspice-wasm` (lazy loaded)
-- [ ] `useSimulation()` hook
-- [ ] DC Operating Point analysis
-- [ ] Transient analysis
-- [ ] VoltageSource, CurrentSource components
-- [ ] Function Generator (sine, square, triangle, PWM)
-- [ ] Voltmeter and Ammeter instruments
-- [ ] Oscilloscope with Plotly waveforms
-- [ ] Simulation panel (configure, run, stop)
-- [ ] Error handling (convergence, floating nodes)
-- [ ] Tests: netlist → ngspice → result parsing
+- [x] Integrate `ngspice-wasm` (lazy loaded)
+- [x] `useSimulation()` hook
+- [x] DC Operating Point analysis
+- [x] Transient analysis
+- [x] VoltageSource, CurrentSource components
+- [x] Function Generator (sine, square, triangle, PWM)
+- [x] Voltmeter and Ammeter instruments
+- [x] Oscilloscope with Plotly waveforms
+- [x] Simulation panel (configure, run, stop)
+- [x] Error handling (convergence, floating nodes)
+- [x] Tests: netlist → ngspice → result parsing
 
-## Phase 4 — PCB Layout (Estimated: 2 weeks)
+## Phase 4 — PCB Layout (Current)
 
 **Goal**: Place components on single-sided PCB, route traces, export Gerber.
 
-- [ ] PCBBoard model with layers
+- [ ] PCBBoard model + Zustand store
 - [ ] Footprint definitions (THT + SMD)
-- [ ] PCB canvas (2D top view with grid)
+- [ ] PCB canvas (2D SVG with grid, zoom/pan)
 - [ ] Component placement from netlist
-- [ ] Manual trace routing
+- [ ] Manual trace routing (click-to-route, vias)
 - [ ] DRC (Design Rule Checking)
 - [ ] Netlist highlighting
 - [ ] Gerber RS-274X export
@@ -128,7 +128,7 @@
 Phase 0: Planning       ██████████ (done)
 Phase 1: Foundation     ██████████ (2 weeks)
 Phase 2: Schematic      ██████████ (2 weeks)
-Phase 3: Simulation     ██████████ (2 weeks)
+Phase 3: Simulation     ██████████ (done)
 Phase 4: PCB Layout     ██████████ (2 weeks)
 Phase 5: 3D Viewer      ██████████ (2 weeks)
 Phase 6: Polish         ██████████ (2 weeks)
