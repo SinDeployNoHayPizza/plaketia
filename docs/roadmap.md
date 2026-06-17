@@ -83,13 +83,13 @@
 
 **Goal**: Interactive 3D visualization of the PCB.
 
-- [ ] Three.js + @react-three/fiber integration
-- [ ] Board geometry (FR4 substrate)
-- [ ] Copper layer visualization
+- [x] Three.js + @react-three/fiber integration
+- [x] Board geometry (FR4 substrate)
+- [x] Copper layer visualization (traces, pads, vias)
 - [ ] Solder mask and silkscreen
-- [ ] Component 3D models (THT: axial, radial, DIP)
-- [ ] Component 3D models (SMD: 0805, SOIC, SOT)
-- [ ] OrbitControls (rotate, zoom, pan)
+- [x] Component 3D models (THT + SMD — generic boxes + pins)
+- [ ] Component 3D models (detailed: axial, radial, DIP, 0805, SOIC, SOT)
+- [x] OrbitControls (rotate, zoom, pan)
 - [ ] Click-to-select linking with schematic
 - [ ] Layer visibility toggles
 - [ ] Performance optimization (instanced meshes)
