@@ -5,6 +5,7 @@
     "": {
       "name": "plaketia",
       "dependencies": {
+        "@o.z/ngspice-wasm": "^0.0.0",
         "@tailwindcss/vite": "^4.3.1",
         "@xyflow/react": "^12.11.0",
         "react": "^19.2.6",
@@ -135,6 +136,8 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.5", "", { "dependencies": { "@tybys/wasm-util": "^0.10.2" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-AWPoBRJ9tsnVhor4sjO7rkni+7p+2IAEFj6cx06UgP10jkQHqay/36uRV/bFkgrh18D9vb4cr8Q0Pthskgzy+Q=="],
+
+    "@o.z/ngspice-wasm": ["@o.z/ngspice-wasm@0.0.0", "", {}, "sha512-KEhzzO+jIMGiRa4U4NDe0Bra3ygc52thPQtVsGPxMAWQ3LnTam2Jzcv+hTQAYaojLtOsWDVq/DZn64m8SwDPSg=="],
 
     "@oxc-project/types": ["@oxc-project/types@0.133.0", "", {}, "sha512-KzkdCd6Uxqnf6l3HOw1xfatAlUURA0g14cvBYFyJ5SaNOQbOUvBr9PKArcPcrNIeRsBdgcUzOGrhKveVpvOIGA=="],
 
