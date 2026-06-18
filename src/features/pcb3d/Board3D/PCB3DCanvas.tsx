@@ -25,7 +25,7 @@ export function PCB3DCanvas({
   boardData: PCBBoardData
   visibility: LayerVisibility
   selectedComponentId?: string | null
-  onComponentClick?: (componentId: string) => void
+  onComponentClick?: (componentId: string | null) => void
 }) {
   const size = Math.max(boardData.width, boardData.height)
   const camDist = size * 1.2
@@ -33,7 +33,7 @@ export function PCB3DCanvas({
   return (
     <div className="w-full h-full">
       <Canvas
-        onPointerMissed={() => onComponentClick?.('')}
+        onPointerMissed={() => onComponentClick?.(null)}
         camera={{
           position: [camDist * 0.6, -camDist * 0.6, camDist],
           fov: 45,
@@ -47,7 +47,7 @@ export function PCB3DCanvas({
         <directionalLight position={[-10, -10, 10]} intensity={0.3} />
 
         <Grid
-          position={[boardData.width / 2, boardData.height / 2, -1]}
+          position={[boardData.width / 2, boardData.height / 2, -(boardData.thickness || 1.6) - 1]}
           args={[size * 2, size * 2]}
           cellSize={2.54}
           cellThickness={0.5}
@@ -60,10 +60,10 @@ export function PCB3DCanvas({
         />
 
         {visibility.board && <BoardGeometry boardData={boardData} />}
-        {visibility.solderMask && <SolderMask boardData={boardData} layer="top" />}
-        {visibility.solderMask && <SolderMask boardData={boardData} layer="bottom" />}
         {visibility.copperTop && <CopperLayer boardData={boardData} layer="top" />}
         {visibility.copperBottom && <CopperLayer boardData={boardData} layer="bottom" />}
+        {visibility.solderMask && <SolderMask boardData={boardData} layer="top" />}
+        {visibility.solderMask && <SolderMask boardData={boardData} layer="bottom" />}
         {visibility.silkscreenTop && <Silkscreen boardData={boardData} />}
         {visibility.components &&
           boardData.placedComponents.map((comp) => (

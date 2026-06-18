@@ -9,7 +9,7 @@ export function BoardGeometry({ boardData }: { boardData: PCBBoardData }) {
 
   return (
     <group>
-      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[width / 2, height / 2, 0]}>
+      <mesh receiveShadow position={[width / 2, height / 2, 0]}>
         <planeGeometry args={[width, height]} />
         <meshStandardMaterial
           color={BOARD_TOP_COLOR}

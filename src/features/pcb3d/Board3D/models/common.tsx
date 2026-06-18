@@ -4,7 +4,7 @@ import type { PlacedComponent } from '../../../pcb/model/types.ts'
 export interface ModelProps {
   component: PlacedComponent
   selected?: boolean
-  onClick?: (componentId: string) => void
+  onClick?: (componentId: string | null) => void
 }
 
 const PIN_COLOR = '#c0c0c0'

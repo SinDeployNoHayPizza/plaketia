@@ -27,7 +27,7 @@ export function ComponentModel({
 }: {
   component: PlacedComponent
   selected?: boolean
-  onClick?: (componentId: string) => void
+  onClick?: (componentId: string | null) => void
 }) {
   const Model = modelMap[component.footprintName] ?? GenericModel
   return <Model component={component} selected={selected} onClick={onClick} />
