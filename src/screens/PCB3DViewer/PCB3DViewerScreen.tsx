@@ -1,7 +1,7 @@
 import { usePCBStore } from '@/features/pcb/store.ts'
 import { ErrorBoundary } from '@/features/pcb3d/Board3D/ErrorBoundary.tsx'
 import { type LayerVisibility, PCB3DCanvas } from '@/features/pcb3d/Board3D/PCB3DCanvas.tsx'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 const defaultVisibility: LayerVisibility = {
   board: true,
@@ -22,7 +22,8 @@ const layerLabels: Record<keyof LayerVisibility, string> = {
 }
 
 export function PCB3DViewerScreen() {
-  const boardData = usePCBStore((s) => s.board?.toJSON())
+  const board = usePCBStore((s) => s.board)
+  const boardData = useMemo(() => board?.toJSON() ?? null, [board])
   const selectedComponentId = usePCBStore((s) => s.selectedComponentId)
   const selectComponent = usePCBStore((s) => s.selectComponent)
   const [visibility, setVisibility] = useState<LayerVisibility>(defaultVisibility)
