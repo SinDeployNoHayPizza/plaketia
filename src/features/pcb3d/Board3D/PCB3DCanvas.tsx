@@ -40,7 +40,9 @@ export function PCB3DCanvas({
           near: 0.1,
           far: camDist * 10,
         }}
-        gl={{ antialias: true }}
+        gl={{ antialias: true, preserveDrawingBuffer: true }}
+        dpr={[1, 2]}
+        onCreated={(state) => console.log('[3D] Canvas ready', state.gl.info)}
       >
         <ambientLight intensity={0.5} />
         <directionalLight position={[10, 10, 20]} intensity={0.8} />

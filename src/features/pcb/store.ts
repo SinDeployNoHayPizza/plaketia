@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { PCBBoard } from './model/PCBBoard.ts'
-import type { DRCViolation, PlacedComponent, Point, Track, Via } from './model/types.ts'
+import type { DRCViolation, PlacedComponent, Point } from './model/types.ts'
 
 export interface PCBState {
   board: PCBBoard | null

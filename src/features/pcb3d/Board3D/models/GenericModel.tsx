@@ -1,16 +1,7 @@
 import { getFootprint } from '../../../pcb/model/Footprint.ts'
-import type { PlacedComponent } from '../../../pcb/model/types.ts'
-import { BodyBox } from './common.tsx'
+import { BodyBox, type ModelProps } from './common.tsx'
 
-export function GenericModel({
-  component,
-  selected,
-  onClick,
-}: {
-  component: PlacedComponent
-  selected?: boolean
-  onClick?: (componentId: string) => void
-}) {
+export function GenericModel({ component, selected, onClick }: ModelProps) {
   const fp = getFootprint(component.footprintName)
   if (!fp) return null
 

@@ -91,6 +91,7 @@ describe('PCBBoard', () => {
     board.placeComponent({
       componentId: 'r1',
       reference: 'R1',
+      type: 'resistor',
       footprintName: 'axial-resistor',
       position: { x: 10, y: 10 },
       rotation: 0,
@@ -100,6 +101,7 @@ describe('PCBBoard', () => {
     board.placeComponent({
       componentId: 'r1',
       reference: 'R1',
+      type: 'resistor',
       footprintName: 'axial-resistor',
       position: { x: 20, y: 20 },
       rotation: 90,
@@ -162,6 +164,7 @@ describe('PCBBoard', () => {
     board.placeComponent({
       componentId: 'r1',
       reference: 'R1',
+      type: 'resistor',
       footprintName: 'axial-resistor',
       position: { x: 10, y: 10 },
       rotation: 0,

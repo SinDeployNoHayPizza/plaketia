@@ -1,4 +1,5 @@
 import { usePCBStore } from '@/features/pcb/store.ts'
+import { ErrorBoundary } from '@/features/pcb3d/Board3D/ErrorBoundary.tsx'
 import { type LayerVisibility, PCB3DCanvas } from '@/features/pcb3d/Board3D/PCB3DCanvas.tsx'
 import { useCallback, useState } from 'react'
 
@@ -63,13 +64,15 @@ export function PCB3DViewerScreen() {
               <div className="text-sm text-gray-300">{selectedComponentId ?? 'None'}</div>
             </div>
           </div>
-          <div className="flex-1">
-            <PCB3DCanvas
-              boardData={boardData}
-              visibility={visibility}
-              selectedComponentId={selectedComponentId}
-              onComponentClick={selectComponent}
-            />
+          <div className="flex-1 min-h-0">
+            <ErrorBoundary>
+              <PCB3DCanvas
+                boardData={boardData}
+                visibility={visibility}
+                selectedComponentId={selectedComponentId}
+                onComponentClick={selectComponent}
+              />
+            </ErrorBoundary>
           </div>
         </div>
       )}
