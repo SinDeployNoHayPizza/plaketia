@@ -34,6 +34,13 @@ Plaketia is a browser-based analog electronics design and analysis tool (EDA). S
 4. **Schematic ↔ PCB sync via netlist** — not direct state sharing
 5. **New component types** go in `features/components/` with proper category folder
 
+## Zustand Selector Pitfalls
+
+1. **Never call `.toJSON()` or create new objects inside a Zustand selector.** The selector runs on every render and Zustand compares results via `Object.is`. A new object every time triggers infinite re-renders with "Maximum update depth exceeded" / "getSnapshot should be cached".
+   - ❌ `useStore((s) => s.board?.toJSON())`
+   - ✅ `const board = useStore((s) => s.board); const data = useMemo(() => board?.toJSON(), [board])`
+2. **Prefer selecting stable references** — primitives, store root objects, or individual fields — and derive derived data with `useMemo` in the component body.
+
 ## Before Making Changes
 
 1. Read relevant docs in `docs/` folder
