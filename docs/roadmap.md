@@ -83,15 +83,15 @@
 
 **Goal**: Interactive 3D visualization of the PCB.
 
-- [ ] Three.js + @react-three/fiber integration
-- [ ] Board geometry (FR4 substrate)
-- [ ] Copper layer visualization
-- [ ] Solder mask and silkscreen
-- [ ] Component 3D models (THT: axial, radial, DIP)
-- [ ] Component 3D models (SMD: 0805, SOIC, SOT)
-- [ ] OrbitControls (rotate, zoom, pan)
-- [ ] Click-to-select linking with schematic
-- [ ] Layer visibility toggles
+- [x] Three.js + @react-three/fiber integration
+- [x] Board geometry (FR4 substrate)
+- [x] Copper layer visualization (traces, pads, vias)
+- [x] Solder mask and silkscreen
+- [x] Component 3D models (THT + SMD — generic boxes + pins)
+- [x] Component 3D models (axial-resistor, radial-capacitor, DIP-8, TO-92, TO-220, 0805, SOIC-8, SOT-23)
+- [x] OrbitControls (rotate, zoom, pan)
+- [x] Click-to-select linking with schematic (3D ↔ store, highlighted body)
+- [x] Layer visibility toggles (sidebar checkboxes)
 - [ ] Performance optimization (instanced meshes)
 
 ## Phase 6 — Polish & Extensibility (Estimated: 2 weeks)
